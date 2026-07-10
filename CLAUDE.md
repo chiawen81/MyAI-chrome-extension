@@ -17,16 +17,21 @@
 - 四執行環境（content/service worker/popup/options）間通訊只透過
   chrome.runtime message，訊息型別集中定義於 shared/messages.ts
 - 每完成一個模組即停下，提示我到 chrome://extensions 手動載入測試
+- 任務想法（功能發想／bug／優化／SDD 調整）記錄於 docs/BOARD.md 任務看板；
+  使用者提到新想法或回報 bug 時先上看板，不急著開計畫文件
 - 功能開發前先在 docs/plans/ 建立計畫（YYYY-MM-DD-<feature>.md，
   結構：User Story → Spec → Tasks）；完成後移至 docs/plans/archive/
-  並更新 docs/CHANGELOG.md
+  並更新 docs/CHANGELOG.md；開工時同步把 BOARD.md 對應項目
+  移到「進行中」並連結計畫文件
 - git commit 訊息一律遵守 docs/COMMIT-CONVENTION.md（type(中文scope) 前綴＋數字列點 body；
   刻意不用 @ 引入，撰寫 commit 前才讀取該檔）
 - 每次任務結束前執行文件同步檢查：
   行為變更 → FEATURES.md；新增 message/storage key/Provider → ARCHITECTURE.md；
-  一律 → CHANGELOG.md；功能完成 → 計畫文件移至 plans/archive/
+  一律 → CHANGELOG.md；功能完成 → 計畫文件移至 plans/archive/、
+  BOARD.md 項目移入「已完成」摺疊區（加完成日期）
 
 ## 詳細文件
+- docs/BOARD.md — 任務看板（發想／待辦／進行中／已完成；刻意不用 @ 引入以省 token，需要時才讀取）
 - @docs/ARCHITECTURE.md — 四執行環境職責、message passing 一覽、chrome.storage 資料結構、Provider 抽象層與擴充點、目錄結構
 - @docs/DEVELOPMENT.md — 命名規則；新增 AI 專家模板／譯文樣式／Provider 的具體步驟；環境需求與計畫歸檔流程
 - @docs/FEATURES.md — REQUIREMENTS.md 第 4 節驗收條件完成狀態＋各功能實際行為與已知限制

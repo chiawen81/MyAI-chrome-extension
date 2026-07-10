@@ -48,9 +48,10 @@
 
 ## 計畫與文件流程（沿用 CLAUDE.md 規則）
 
-1. 功能開發前在 `docs/plans/` 建 `YYYY-MM-DD-<feature>.md`（User Story → Spec → Tasks）。
+0. 想法先上 `docs/BOARD.md` 任務看板（💡 發想／📥 待辦），一行即可，不急著開計畫文件；看板使用約定（含編號規則）收納於該檔末段。
+1. 決定開工後在 `docs/plans/` 建 `YYYY-MM-DD-<feature>.md`（User Story → Spec → Tasks），看板項目移到 🚧 進行中並回填計畫連結。
 2. 每完成一個模組即停下，到 `chrome://extensions` 手動載入測試（勿一次寫完才測）。
-3. 完成後：計畫文件移至 `docs/plans/archive/`，並做文件同步檢查——行為變更 → FEATURES.md；新增 message／storage key／Provider → ARCHITECTURE.md；一律 → CHANGELOG.md。
+3. 完成後：計畫文件移至 `docs/plans/archive/`，看板項目移入 ✅ 已完成摺疊區（加日期），並做文件同步檢查——行為變更 → FEATURES.md；新增 message／storage key／Provider → ARCHITECTURE.md；一律 → CHANGELOG.md。
 
 ## 硬性約束（改動前必讀）
 
