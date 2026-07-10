@@ -16,7 +16,11 @@
 - content script 內禁用框架與全域樣式污染，樣式一律走 scoped class
 - 四執行環境（content/service worker/popup/options）間通訊只透過
   chrome.runtime message，訊息型別集中定義於 shared/messages.ts
-- 每完成一個模組即停下，提示我到 chrome://extensions 手動載入測試
+- 任務執行節奏：實作類 task 連續執行到底，做到「文件同步與收尾」task 前
+  停下，提示我到 chrome://extensions 手動驗收，通過後才收尾；
+  例外：若某 task 必須先由我驗收或回報結果才能往下做（如依賴外部頁面
+  結構的 spike、需真實 API key 的驗證），在計畫階段就判斷並於計畫文件
+  的 Tasks 標註建議停點
 - 任務想法（功能發想／bug／優化／SDD 調整）記錄於 docs/BOARD.md 任務看板；
   使用者提到新想法或回報 bug 時先上看板，不急著開計畫文件
 - 功能開發前先在 docs/plans/ 建立計畫（YYYY-MM-DD-<feature>.md，

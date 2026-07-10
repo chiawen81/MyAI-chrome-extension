@@ -50,7 +50,7 @@
 
 0. 想法先上 `docs/BOARD.md` 任務看板（💡 發想／📥 待辦），一行即可，不急著開計畫文件；看板使用約定（含編號規則）收納於該檔末段。
 1. 決定開工後在 `docs/plans/` 建 `YYYY-MM-DD-<feature>.md`（User Story → Spec → Tasks），看板項目移到 🚧 進行中並回填計畫連結。
-2. 每完成一個模組即停下，到 `chrome://extensions` 手動載入測試（勿一次寫完才測）。
+2. 實作類 task 連續執行到底，做到「文件同步與收尾」task 前停下，請使用者到 `chrome://extensions` 手動驗收，通過後才收尾。例外：必須先由使用者驗收或回報結果才能繼續的 task（如依賴外部頁面結構的 spike、需真實 API key 的驗證），在建計畫時就判斷並於 Tasks 標註建議停點。
 3. 完成後：計畫文件移至 `docs/plans/archive/`，看板項目移入 ✅ 已完成摺疊區（加日期），並做文件同步檢查——行為變更 → FEATURES.md；新增 message／storage key／Provider → ARCHITECTURE.md；一律 → CHANGELOG.md。
 
 ## 硬性約束（改動前必讀）

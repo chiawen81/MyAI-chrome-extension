@@ -43,17 +43,6 @@
 </details>
 
 <details>
-<summary>#10 [SDD] 調整任務執行節奏：連續執行、收尾前才停下驗收</summary>
-
-- 動機：現行規則每完成一個模組就停下等驗收，節奏太碎（2026-07-11）。
-- 新規則構想：
-  1. 各 task 可連續執行到底，遇到「文件同步與收尾」類 task 前先停下，等使用者驗收測試通過再收尾。
-  2. 特例：若某 task 必須由使用者先驗收（甚至回報結果 AI 才能往下做），由 AI 在計畫階段判斷並標註建議停點。
-- 落地：改 CLAUDE.md 關鍵規則與 DEVELOPMENT.md 計畫流程對應段落。
-
-</details>
-
-<details>
 <summary>#11 [功能] 樣式設定：自訂顏色改用色盤選色＋即時預覽</summary>
 
 - 動機：目前自訂文字色／背景色要手輸色票，看不到顏色（2026-07-11）。
@@ -111,6 +100,7 @@
 <details>
 <summary>✅ 已完成（點擊展開）</summary>
 
+- 2026-07-11 #10 [SDD] 調整任務執行節奏：連續執行、收尾前才停下驗收（特例於計畫階段標註停點）— 已落地 CLAUDE.md 與 DEVELOPMENT.md
 - 2026-07-10 #1 [Bug] 修復注入競態與首屏渲染過慢 — [plans/archive/2026-07-10-fix-injection-race-and-slow-first-paint.md](plans/archive/2026-07-10-fix-injection-race-and-slow-first-paint.md)
 - 2026-07-10 #2 [SDD] 建立核心文件（ARCHITECTURE／DEVELOPMENT／FEATURES／TESTING）與 commit 規範 — 詳見 CHANGELOG
 
