@@ -1,6 +1,8 @@
 # CHANGELOG
 
 ## 2026-07-10
+- 新增 docs/COMMIT-CONVENTION.md：commit 訊息格式規範（八種 type 前綴＋中文 scope、數字列點父子層 body、可讀性原則）；CLAUDE.md 關鍵規則加入純文字連結（不用 @ 引入以省 token）
+- 綁定 GitHub 版控：git init（main 分支）、.gitignore 排除 _temp/、remote 綁 chiawen81/MyAI-chrome-extension
 - 修復注入競態：background 注入網頁翻譯 content script 後輪詢 PING（100ms × 最多 20 次）等待就緒才轉發指令；修掉「第一次按顯示此頁面無法翻譯、第二次才動」的問題（根因：CRXJS `?script` 載入器以非同步 import 載入真正模組，executeScript 完成時 listener 尚未註冊）
 - 網頁翻譯改為小組漸進渲染：content script 把待翻段落切成 ≤8 段／≤1200 字元的小組各自送翻，回應到達即渲染該組，不再等整批完成（首屏譯文由 ~30 秒縮短到數秒）
 - 惰性翻譯預抓範圍由固定 200px 擴大為「上方 0.5、下方 2 個螢幕高」（rootMargin 百分比），往下捲動時段落大多已翻好

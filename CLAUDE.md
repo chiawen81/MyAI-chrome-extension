@@ -20,6 +20,8 @@
 - 功能開發前先在 docs/plans/ 建立計畫（YYYY-MM-DD-<feature>.md，
   結構：User Story → Spec → Tasks）；完成後移至 docs/plans/archive/
   並更新 docs/CHANGELOG.md
+- git commit 訊息一律遵守 docs/COMMIT-CONVENTION.md（type(中文scope) 前綴＋數字列點 body；
+  刻意不用 @ 引入，撰寫 commit 前才讀取該檔）
 - 每次任務結束前執行文件同步檢查：
   行為變更 → FEATURES.md；新增 message/storage key/Provider → ARCHITECTURE.md；
   一律 → CHANGELOG.md；功能完成 → 計畫文件移至 plans/archive/
