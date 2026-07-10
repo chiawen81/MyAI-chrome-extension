@@ -87,7 +87,14 @@ function bindEvents(): void {
     if (result.ok) {
       updateToggleButton(result.active === true);
     } else {
+      // 失敗原因放 tooltip（chrome:// 無法注入、content script 未回應等），
+      // 2 秒後恢復按鈕，讓使用者可以重試
       toggleButton.textContent = '此頁面無法翻譯';
+      toggleButton.title = result.error ?? '';
+      setTimeout(() => {
+        toggleButton.title = '';
+        updateToggleButton(false);
+      }, 2000);
     }
   });
 

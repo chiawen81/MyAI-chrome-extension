@@ -88,30 +88,70 @@ function init(): void {
     return cachedMaxChars;
   }
 
-  /** 把待送清單送去 background 翻譯，並把結果寫回各段落 */
+  /** 單組送翻的段落數上限（小組各自請求，回應到達即渲染，譯文才能漸進出現） */
+  const MAX_GROUP_ITEMS = 8;
+  /** 單組送翻的字元數上限 */
+  const MAX_GROUP_CHARS = 1200;
+
+  /**
+   * 把待送清單切成小組、各自送 background 翻譯。
+   * 每組的回應到達就立即渲染該組譯文，不等其他組——
+   * 首批譯文的出現時間只取決於最小一組的 API 延遲。
+   */
   async function flushPending(): Promise<void> {
     const elements = pendingElements;
     pendingElements = [];
     if (elements.length === 0) return;
 
-    const texts = elements.map(extractText);
-    let response: TranslateBatchResponse;
-    try {
-      response = await chrome.runtime.sendMessage({ type: 'TRANSLATE_BATCH', items: texts });
-    } catch (err) {
-      response = { ok: false, error: err instanceof Error ? err.message : String(err) };
-    }
+    const entries = elements.map((element) => ({ element, text: extractText(element) }));
 
-    // 使用者可能在等待期間按了「還原」，此時直接丟棄結果
-    if (!active) return;
-
-    if (response.ok && response.translations) {
-      elements.forEach((element, i) => setTranslation(element, response.translations![i]));
-    } else {
-      const message = response.error ?? '未知錯誤';
-      elements.forEach((element) => setError(element, message));
-      showToast(`翻譯失敗：${message}`);
+    // 依段落數與字元數雙上限切組
+    const groups: Array<typeof entries> = [];
+    let current: typeof entries = [];
+    let currentChars = 0;
+    for (const entry of entries) {
+      const overLimit =
+        current.length >= MAX_GROUP_ITEMS || currentChars + entry.text.length > MAX_GROUP_CHARS;
+      if (current.length > 0 && overLimit) {
+        groups.push(current);
+        current = [];
+        currentChars = 0;
+      }
+      current.push(entry);
+      currentChars += entry.text.length;
     }
+    if (current.length > 0) groups.push(current);
+
+    // 同一次 flush 失敗只 toast 一次，避免多組同時失敗時洗版
+    let toastShown = false;
+
+    await Promise.all(
+      groups.map(async (group) => {
+        let response: TranslateBatchResponse;
+        try {
+          response = await chrome.runtime.sendMessage({
+            type: 'TRANSLATE_BATCH',
+            items: group.map((entry) => entry.text),
+          });
+        } catch (err) {
+          response = { ok: false, error: err instanceof Error ? err.message : String(err) };
+        }
+
+        // 使用者可能在等待期間按了「還原」，此時直接丟棄結果
+        if (!active) return;
+
+        if (response.ok && response.translations) {
+          group.forEach((entry, i) => setTranslation(entry.element, response.translations![i]));
+        } else {
+          const message = response.error ?? '未知錯誤';
+          group.forEach((entry) => setError(entry.element, message));
+          if (!toastShown) {
+            toastShown = true;
+            showToast(`翻譯失敗：${message}`);
+          }
+        }
+      }),
+    );
   }
 
   /* ---------------------------- 提示訊息 ---------------------------- */

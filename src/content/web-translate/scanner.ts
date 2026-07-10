@@ -27,7 +27,9 @@ export class Scanner {
   constructor(onVisible: (element: HTMLElement) => void) {
     this.onVisible = onVisible;
 
-    // rootMargin 往下多抓 200px：使用者捲到之前先開始翻譯，體感更順
+    // rootMargin 預抓範圍：下方 2 個螢幕高、上方 0.5 個螢幕高（百分比相對於視口）。
+    // API 單組延遲約 5~15 秒，預抓太少會讓捲動永遠跑在翻譯前面、滿屏「翻譯中…」；
+    // 頁面字數上限（settings.maxCharsPerPage）仍擋著預抓的費用上限。
     this.intersectionObserver = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
@@ -37,7 +39,7 @@ export class Scanner {
           this.onVisible(element);
         }
       },
-      { rootMargin: '200px 0px' },
+      { rootMargin: '50% 0px 200% 0px' },
     );
 
     // 動態新增的節點：合併 1 秒內的變動後重新掃描一次，避免高頻頁面拖慢效能

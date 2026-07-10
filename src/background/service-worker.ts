@@ -204,16 +204,32 @@ function sendToTab<T>(tabId: number, message: ContentRequest): Promise<T> {
 /**
  * 確保網頁翻譯 content script 已存在於分頁中。
  * 先 PING 試探；沒有回應才注入（避免重複注入）。
+ *
+ * 注入後必須輪詢 PING 等待就緒：CRXJS 的 ?script 產物是一個載入器，
+ * 會再以動態 import 非同步載入真正的模組，executeScript resolve 時
+ * onMessage listener 可能尚未註冊，立刻送訊息會撞上
+ * "Receiving end does not exist"。
  */
 async function ensureWebTranslateScript(tabId: number): Promise<void> {
   try {
     await sendToTab(tabId, { type: 'PING' });
+    return;
   } catch {
     await chrome.scripting.executeScript({
       target: { tabId },
       files: [webTranslateScript],
     });
   }
+
+  for (let attempt = 0; attempt < 20; attempt++) {
+    try {
+      await sendToTab(tabId, { type: 'PING' });
+      return;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+  throw new Error('content script 注入後未回應');
 }
 
 /** 切換指定分頁的翻譯狀態；回傳切換後是否為「翻譯中」 */

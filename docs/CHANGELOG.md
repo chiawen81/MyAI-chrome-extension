@@ -1,6 +1,12 @@
 # CHANGELOG
 
 ## 2026-07-10
+- 修復注入競態：background 注入網頁翻譯 content script 後輪詢 PING（100ms × 最多 20 次）等待就緒才轉發指令；修掉「第一次按顯示此頁面無法翻譯、第二次才動」的問題（根因：CRXJS `?script` 載入器以非同步 import 載入真正模組，executeScript 完成時 listener 尚未註冊）
+- 網頁翻譯改為小組漸進渲染：content script 把待翻段落切成 ≤8 段／≤1200 字元的小組各自送翻，回應到達即渲染該組，不再等整批完成（首屏譯文由 ~30 秒縮短到數秒）
+- 惰性翻譯預抓範圍由固定 200px 擴大為「上方 0.5、下方 2 個螢幕高」（rootMargin 百分比），往下捲動時段落大多已翻好
+- OpenAI Provider：reasoning 模型明確要求最低推理量——`gpt-5*`（`gpt-5-chat` 除外）帶 `reasoning_effort: 'minimal'`、`o1/o3/o4` 系列帶 `'low'`，其他模型請求不變；翻譯延遲大幅下降（實測整篇 BBC 文章清快取重翻 18 秒，首屏數秒內）
+- popup 翻譯失敗時將原因放入按鈕 tooltip，2 秒後自動恢復按鈕文字可重試
+- 計畫文件 `2026-07-10-fix-injection-race-and-slow-first-paint.md` 完成並歸檔
 - 建立核心文件：ARCHITECTURE.md（四執行環境／訊息協定／storage 結構／Provider 擴充點／目錄）、DEVELOPMENT.md（命名規則與擴充步驟）、FEATURES.md（驗收對照與行為描述）、TESTING.md（vitest 規劃＋手動驗收清單）；CLAUDE.md「詳細文件」段落更新為實際索引
 - 初始化開發流程骨架：CLAUDE.md、docs/plans/（含 archive/）、docs/CHANGELOG.md
 - 跨 context 訊息型別自 shared/types.ts 抽出至 shared/messages.ts（types.ts re-export 維持相容）

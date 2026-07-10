@@ -15,6 +15,7 @@
 跨環境須知：
 
 - **網頁翻譯 script 可能被重複注入**（background 的 PING 逾時再注入），以 `window.__btWebTranslateLoaded` 旗標防重複初始化。
+- **注入後必須輪詢 PING 等待就緒**：CRXJS `?script` 的產物是載入器，會再以動態 import 非同步載入真正模組，`executeScript` resolve 時 onMessage listener 可能尚未註冊；background 的 `ensureWebTranslateScript` 注入後輪詢 PING（100ms × 最多 20 次）成功才轉發指令。
 - **semaphore 狀態存在 SW 記憶體**，SW 被 Chrome 休眠後歸零重來；不能依賴它做跨請求的持久狀態。
 - **YouTube content script 不經 background 存取快取**：整部影片的譯文快取由它直接讀寫 `chrome.storage.local`（`cache.ts` 的 `crypto.subtle` 在 https 頁面可用）。逐句翻譯仍走 background 的 `TRANSLATE_BATCH`。
 - `TOGGLE_TRANSLATE` 的回應是**同步**的：`enable()` 為 async，但立即回報 `active: true`，呼叫端不能假設回應時翻譯已開始。
@@ -83,6 +84,7 @@ interface TranslationProvider {
 - `parseBatchResult` 回 `null` 時由 background 啟動逐段重試 fallback，這是批次對齊失敗的既定處理路徑。
 - 不引入官方 SDK，統一 fetch + JSON（控制 SW bundle 體積）。
 - Claude 實作帶 `anthropic-dangerous-direct-browser-access: true` header（BYOK 情境）；OpenAI 實作**刻意不指定 max_tokens**（新舊模型參數名不同，交給 API 預設）。
+- OpenAI 實作對 reasoning 模型明確要求最低推理量（翻譯不需深度推理，預設推理量會拖慢回應）：`gpt-5*` 帶 `reasoning_effort: 'minimal'`（`gpt-5-chat` 為非 reasoning 模型，排除）、`o1/o3/o4` 系列帶 `'low'`（不支援 minimal）；其他模型不帶此參數，維持相容。
 
 新增 Provider 的擴充點（完整步驟見 DEVELOPMENT.md）：`types.ts` 的 `ProviderId`、`Settings` 欄位＋`DEFAULT_SETTINGS`、`providers/<id>.ts` 實作、`providers/index.ts` 註冊表、manifest `host_permissions`、options／popup 的 UI。
 
@@ -96,7 +98,7 @@ src/
   background/service-worker.ts     # 訊息總入口、API 代理、快取、semaphore、快捷鍵、動態注入
   content/
     web-translate/
-      index.ts                     # 功能一進入點：toggle 狀態機、批次收集（400ms 窗口）、字數上限、toast
+      index.ts                     # 功能一進入點：toggle 狀態機、批次收集（400ms 窗口）＋小組漸進送翻、字數上限、toast
       scanner.ts                   # 段落掃描：BLOCK_SELECTOR 篩選 + IntersectionObserver + MutationObserver
       renderer.ts                  # 譯文節點插入/更新/移除（附加為原文子節點，不動原文）
     youtube/
