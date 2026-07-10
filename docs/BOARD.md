@@ -76,30 +76,15 @@
 
 ## 🚧 進行中
 
-<details>
-<summary>#7 [功能] Claude 助手：新增「請 Claude 摘要選取文字」動作 — 併入 #3 計畫實作</summary>
-
-- 動機：只想摘要選取的段落，不用整頁（2026-07-11 測試回饋）。
-- 2026-07-11 核可後併入 #3 的計畫執行（見計畫 §2.8-bis 增補第 4 點），已實作待手動測試。
-
-</details>
-
-<details>
-<summary>#3 [功能] 右鍵選單 Claude 助手 — 實作中（Task 1 起）</summary>
-
-- 方向決策（2026-07-11）：採「交棒 claude.ai」方案——右鍵後把內容帶入使用者自己的 claude.ai 對話，外掛不呼叫 API、不扣費。
-- 機制決策（2026-07-11）：DOM 注入為主（同 Glasp 模式，需 claude.ai host 權限）、`?q=` 參數備援；動作 1 擷取內文直接貼上；prompt 模板開放使用者於 options 自訂（設邊界）。
-- 計畫文件：[plans/2026-07-10-context-menu-claude-actions.md](plans/2026-07-10-context-menu-claude-actions.md)（審閱通過）
-- Task 0 驗證完成（2026-07-11）：注入選擇器／寫入／送出／長文行為全數確認，結果回填計畫 §2.1。
-- 下一步：依計畫 Task 1–6 逐一實作，每步停下到 chrome://extensions 手動測試。
-
-</details>
+_（空）_
 
 
 <br><br>
 <details>
 <summary>✅ 已完成（點擊展開）</summary>
 
+- 2026-07-11 #3 [功能] 右鍵選單 Claude 助手（五動作交棒 claude.ai）— [plans/archive/2026-07-10-context-menu-claude-actions.md](plans/archive/2026-07-10-context-menu-claude-actions.md)
+- 2026-07-11 #7 [功能] Claude 助手：新增「請 Claude 摘要選取文字」動作 — 併入 #3 計畫（見其 §2.8-bis）
 - 2026-07-11 #10 [SDD] 調整任務執行節奏：連續執行、收尾前才停下驗收（特例於計畫階段標註停點）— 已落地 CLAUDE.md 與 DEVELOPMENT.md
 - 2026-07-10 #1 [Bug] 修復注入競態與首屏渲染過慢 — [plans/archive/2026-07-10-fix-injection-race-and-slow-first-paint.md](plans/archive/2026-07-10-fix-injection-race-and-slow-first-paint.md)
 - 2026-07-10 #2 [SDD] 建立核心文件（ARCHITECTURE／DEVELOPMENT／FEATURES／TESTING）與 commit 規範 — 詳見 CHANGELOG

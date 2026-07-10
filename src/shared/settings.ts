@@ -3,10 +3,18 @@
  * - 設定本體存 chrome.storage.sync（跨裝置同步）
  * - 自訂 AI 專家存另一個 key，避免單一項目超過 sync 的 8KB 上限
  */
+import {
+  ASSISTANT_ACTIONS,
+  DEFAULT_ASSISTANT_PROMPTS,
+  type AssistantAction,
+  type AssistantPromptOverrides,
+} from './assistant-prompts';
 import type { ExpertTemplate, Settings } from './types';
 
 const SETTINGS_KEY = 'settings';
 const CUSTOM_EXPERTS_KEY = 'customExperts';
+// Claude 助手模板獨立存一個 key（沿用 customExperts 避開單項 8KB 上限的先例）
+const ASSISTANT_PROMPTS_KEY = 'assistantPrompts';
 
 /** 預設設定：安裝後尚未設定任何東西時的初始值 */
 export const DEFAULT_SETTINGS: Settings = {
@@ -25,6 +33,7 @@ export const DEFAULT_SETTINGS: Settings = {
   concurrency: 3,
   maxCharsPerPage: 10000,
   youtubeBatchSize: 40,
+  assistantMaxChars: 50000,
 };
 
 /**
@@ -55,6 +64,26 @@ export async function loadCustomExperts(): Promise<ExpertTemplate[]> {
 
 export async function saveCustomExperts(experts: ExpertTemplate[]): Promise<void> {
   await chrome.storage.sync.set({ [CUSTOM_EXPERTS_KEY]: experts });
+}
+
+/**
+ * 讀取 Claude 助手的帶入文字模板（與預設模板合併後的完整四筆）。
+ * 空字串／純空白／缺項一律退回預設，呼叫端不需再判斷。
+ */
+export async function loadAssistantPrompts(): Promise<Record<AssistantAction, string>> {
+  const stored = await chrome.storage.sync.get(ASSISTANT_PROMPTS_KEY);
+  const saved = (stored[ASSISTANT_PROMPTS_KEY] ?? {}) as AssistantPromptOverrides;
+  const merged: Record<AssistantAction, string> = { ...DEFAULT_ASSISTANT_PROMPTS };
+  for (const action of ASSISTANT_ACTIONS) {
+    const value = saved[action];
+    if (typeof value === 'string' && value.trim() !== '') merged[action] = value;
+  }
+  return merged;
+}
+
+/** 儲存 Claude 助手模板的覆寫（只存與預設不同的動作；驗證由呼叫端做，見 validateAssistantTemplate） */
+export async function saveAssistantPrompts(overrides: AssistantPromptOverrides): Promise<void> {
+  await chrome.storage.sync.set({ [ASSISTANT_PROMPTS_KEY]: overrides });
 }
 
 /**

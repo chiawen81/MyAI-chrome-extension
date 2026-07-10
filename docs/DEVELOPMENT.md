@@ -18,7 +18,8 @@
 | 訊息 type | UPPER_SNAKE，動詞開頭；集中定義於 `shared/messages.ts` | `TRANSLATE_BATCH` |
 | storage key | sync：camelCase 名詞；local 快取：`btcache:` 前綴 + hash | `customExperts`、`btcache:<hex>` |
 | 自訂專家 id | `custom-<timestamp>`（內建專家為語意 id，如 `general`） | `custom-1720000000000` |
-| window 全域旗標 | `__bt` 前綴 | `__btWebTranslateLoaded` |
+| window 全域旗標 | `__bt` 前綴 | `__btWebTranslateLoaded`、`__btClaudeInjectLoaded` |
+| 右鍵選單項目 id | `bt-assistant-` 前綴 + `AssistantAction` | `bt-assistant-summarize-page` |
 
 ## 新增內建 AI 專家模板
 
@@ -45,6 +46,15 @@
 6. `src/options/index.html` + `options.ts`：翻譯服務分頁加 key／model 欄位與事件；`#provider` select 加選項；測試連線的欄位對應要補。
 7. `src/popup/index.html`：`#provider` select 加選項。
 8. 完成後更新 ARCHITECTURE.md 第 4 節與本檔。
+
+## 新增 Claude 助手右鍵動作
+
+1. `src/shared/assistant-prompts.ts`：`AssistantAction` union 加新 id；`ASSISTANT_ACTIONS` 插入（**順序即右鍵選單與 options 分頁的順序**）；`ASSISTANT_ACTION_LABELS`、`DEFAULT_ASSISTANT_PROMPTS`（必含 `{{content}}`，指示句用正體中文）、`ASSISTANT_AUTO_SUBMIT` 各補一筆。
+2. `src/background/service-worker.ts`：`registerAssistantMenus` 的 `contextsOf` 補該動作的 contexts（型別為 `Record<AssistantAction, …>`，漏了 typecheck 會擋）。
+3. 其餘免改——右鍵選單與 options「Claude 助手」分頁的模板卡都從 `ASSISTANT_ACTIONS` 動態產生。
+4. 若動作需要中文判斷（翻譯類）或頁面擷取（整頁類），在 `handleAssistantAction` 對應分支接線。
+
+隔離慣例提醒：所有依賴 claude.ai 未公開 DOM 的邏輯一律放 `src/content/claude-inject/index.ts`（同 `subtitle-provider.ts` 之於 YouTube），新動作不應引入新的 claude.ai DOM 依賴。
 
 ## 計畫與文件流程（沿用 CLAUDE.md 規則）
 

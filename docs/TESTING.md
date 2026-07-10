@@ -33,6 +33,18 @@ Node 20+ 的 `globalThis.crypto.subtle` 可直接跑，不需 mock。`cacheGetMa
 
 注意：jsdom/happy-dom 對 `IntersectionObserver`、`checkVisibility` 支援不全，需 stub。
 
+### Claude 助手純函式（`src/shared/assistant-prompts.ts`）
+
+| 對象 | 測試重點 |
+|---|---|
+| `isMostlyChinese` | 純英文 → false；純中文 → true；中英混合恰在 50% 邊界；空字串／純空白 → false；空白字元不計入分母 |
+| `truncateForHandoff` | 未超限原樣回傳；超限保留開頭＋文末截斷註記；恰等於上限不截 |
+| `buildHandoffText` | 變數代入（content／page_url／page_title／target_lang_label）；content 超過 maxChars 被截斷但模板尾巴（如「我的問題：」）保留；maxChars 低於下限 500 時以 500 計 |
+| `buildFallbackUrl` | 輸出 `https://claude.ai/new?q=` 前綴；內容經 encodeURIComponent（換行 → `%0A`）；超過 2,000 字元備援上限再截 |
+| `validateAssistantTemplate` | 缺 `{{content}}` → 錯誤訊息；超過 500 字元 → 錯誤訊息；合法 → null |
+
+另：`extractPageContent`（`src/content/page-extract.ts`，需 DOM 環境）——語意容器命中（article ≥ 500 字）；容器內排除 nav/aside/推薦連結；過濾後過短退回容器全文；無語意容器時共同祖先啟發式；全空時 body.innerText 回退。注意 jsdom/happy-dom 的 `innerText`／`checkVisibility` 支援不全需 stub；且函式必須維持自包含（測試可順便驗 `toString()` 不含 import 引用）。
+
 ### 其他值得覆蓋的純函式
 
 - `renderTemplate` / `findExpert`（`shared/experts.ts`）：變數代入、多次出現、找不到 id 退回「通用」。
@@ -87,3 +99,23 @@ Node 20+ 的 `globalThis.crypto.subtle` 可直接跑，不需 mock。`cacheGetMa
 - [ ] 填錯 key 測試連線：顯示 API 回傳的錯誤訊息
 - [ ] 清除快取後快取筆數歸 0；重翻頁面會重新請求 API
 - [ ] DevTools → Application → Extension storage：確認 API key 只存在 `chrome.storage.sync`；Network 面板確認請求只發往 api.anthropic.com / api.openai.com / youtube.com
+
+### 2.6 右鍵選單 Claude 助手
+
+前置：已登入 claude.ai。
+
+- [ ] http/https 頁面右鍵可見選單（空白處僅「摘要此頁」；有選取時五項皆有）；`chrome://` 頁不顯示
+- [ ] 摘要此頁：新聞文章頁 → 新分頁 claude.ai 自動填入「指示＋標題＋網址＋擷取內文」並**自動送出**；擷取內容為文章主體，導覽列／頁尾／推薦連結雜訊少（2–3 個不同版型交叉驗證）
+- [ ] 摘要此頁：登入牆內的頁面也能擷取貼入（不依賴 claude.ai 讀網址）
+- [ ] 摘要選取文字：選取段落 → 自動送出、以目標語言摘要該段
+- [ ] 帶入選取文字：輸入框填入引文與「我的問題：」結尾，**未自動送出**；接著輸入問題送出後回答針對引文
+- [ ] 翻譯：選取英文段落 → 自動送出後得到正體中文譯文
+- [ ] 翻譯／翻譯＋摘要：選取中文段落 → 原頁跳「已是中文」確認框；取消不開分頁，確認照常執行
+- [ ] 翻譯＋摘要：選取英文長段 → 回應同時含完整翻譯與條列摘要兩節
+- [ ] 長內容：> `assistantMaxChars` 時被截斷且末尾有「（內容過長，已截斷）」註記；「Claude 助手」分頁調整上限後立即生效
+- [ ] 目標語言切換（如改日文）後「摘要此頁／摘要選取文字」指示句對應更新；翻譯類仍固定正體中文（預設模板）
+- [ ] 自訂模板：修改模板後右鍵動作反映自訂內容；「還原預設」／清空後回到預設；缺 `{{content}}` 或超過 500 字元 → alert 擋下不寫入
+- [ ] 換行、引號、emoji 內容填入後不亂碼、格式合理
+- [ ] 備援模擬：暫時把 claude-inject 的輸入框選擇器改壞 → 逾時後以 `?q=` 開頁（截斷版），不產生未捕捉錯誤
+- [ ] 未登入 claude.ai 時觸發：導向登入頁、帶入內容不保留（已知限制）
+- [ ] 既有功能迴歸：整頁雙語翻譯、YouTube 字幕、popup、options 行為不變

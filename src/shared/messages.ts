@@ -40,6 +40,26 @@ export type ContentRequest =
   | { type: 'TOGGLE_TRANSLATE' }
   | { type: 'GET_STATE' };
 
+/** background → claude.ai 注入 script（Claude 助手）的請求 */
+export type ClaudeInjectRequest =
+  | { type: 'PING' }
+  | {
+      /** 把帶入文字填進 claude.ai 輸入框；autoSubmit 為 true 時填完自動送出 */
+      type: 'ASSISTANT_FILL';
+      text: string;
+      autoSubmit: boolean;
+    };
+
+/** ASSISTANT_FILL 的回應 */
+export interface AssistantFillResponse {
+  ok: boolean;
+  /** 是否成功把文字填入輸入框（false = 找不到輸入框，background 應走 ?q= 備援） */
+  filled: boolean;
+  /** 是否已自動送出（autoSubmit 為 false 或送出鈕找不到時為 false） */
+  submitted: boolean;
+  error?: string;
+}
+
 /** 批次翻譯的回應 */
 export interface TranslateBatchResponse {
   ok: boolean;

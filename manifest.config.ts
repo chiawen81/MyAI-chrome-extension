@@ -4,15 +4,18 @@ import { defineManifest } from '@crxjs/vite-plugin';
  * Chrome 外掛 Manifest (V3)
  *
  * 權限說明（上架審核時每個權限都必須對應到具體功能）：
- * - storage:    儲存使用者設定（chrome.storage.sync）與翻譯快取（chrome.storage.local）
- * - activeTab:  使用者點擊圖示或按快捷鍵時，取得目前分頁的暫時性存取權
- * - scripting:  搭配 activeTab，把「網頁雙語翻譯」的 content script 動態注入目前分頁
- *               （因此不需要 <all_urls> 這種過寬的 host 權限）
+ * - storage:      儲存使用者設定（chrome.storage.sync）與翻譯快取（chrome.storage.local）
+ * - activeTab:    使用者點擊圖示、按快捷鍵或點右鍵選單時，取得目前分頁的暫時性存取權
+ * - scripting:    搭配 activeTab，把「網頁雙語翻譯」的 content script 動態注入目前分頁
+ *                 （因此不需要 <all_urls> 這種過寬的 host 權限）
+ * - contextMenus: 「Claude 助手」的右鍵選單項目（摘要此頁／摘要選取文字／帶入選取文字／翻譯／翻譯＋摘要）
  *
  * host_permissions 說明：
  * - api.anthropic.com / api.openai.com: 由 background 直接呼叫 AI 翻譯 API（BYOK），
  *   在 service worker 內 fetch 需要 host 權限才能跨網域
  * - youtube.com: YouTube 雙語字幕功能的 content script 注入範圍
+ * - claude.ai: 「Claude 助手」把使用者選取／擷取的內容填入其本人的 claude.ai 對話
+ *   （對右鍵動作開啟的 claude.ai 分頁注入填入 script；不呼叫 API、內容不經第三方）
  */
 export default defineManifest({
   manifest_version: 3,
@@ -42,11 +45,12 @@ export default defineManifest({
     service_worker: 'src/background/service-worker.ts',
     type: 'module',
   },
-  permissions: ['storage', 'activeTab', 'scripting'],
+  permissions: ['storage', 'activeTab', 'scripting', 'contextMenus'],
   host_permissions: [
     'https://api.anthropic.com/*',
     'https://api.openai.com/*',
     '*://*.youtube.com/*',
+    'https://claude.ai/*',
   ],
   // YouTube 需要在進入頁面時就注入（要監聽 SPA 換片事件），因此採靜態宣告；
   // 一般網頁翻譯則走 activeTab + scripting 動態注入，避免申請過寬權限。

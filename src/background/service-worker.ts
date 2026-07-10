@@ -6,16 +6,31 @@
  * 2. 翻譯快取：hash(原文+供應商+模型+專家+目標語言) → 譯文
  * 3. 並發控制：限制同時進行的 API 請求數，防止費用暴衝
  * 4. 快捷鍵（Alt+T）與 popup 的「翻譯／還原」：動態注入 content script 後轉發指令
+ * 5. 右鍵選單 Claude 助手：把內容交棒到使用者自己的 claude.ai 對話
+ *    （開新分頁 → 注入 claude-inject script → 填入／送出；不呼叫 API、不扣費）
  */
+import claudeInjectScript from '../content/claude-inject/index?script';
+import { extractPageContent, type PageExtractResult } from '../content/page-extract';
 import webTranslateScript from '../content/web-translate/index?script';
 import { getProvider } from '../providers';
 import { buildBatchUserPrompt, buildSingleUserPrompt, parseBatchResult } from '../providers/base';
+import {
+  ASSISTANT_ACTIONS,
+  ASSISTANT_ACTION_LABELS,
+  ASSISTANT_AUTO_SUBMIT,
+  buildFallbackUrl,
+  buildHandoffText,
+  isMostlyChinese,
+  type AssistantAction,
+} from '../shared/assistant-prompts';
 import { cacheClear, cacheCount, cacheGetMany, cacheSetMany, makeCacheKey } from '../shared/cache';
 import { BUILTIN_EXPERTS, findExpert, renderTemplate } from '../shared/experts';
-import { promptNameOf } from '../shared/languages';
-import { loadCustomExperts, loadSettings } from '../shared/settings';
+import { labelOf, promptNameOf } from '../shared/languages';
+import { loadAssistantPrompts, loadCustomExperts, loadSettings } from '../shared/settings';
 import type {
+  AssistantFillResponse,
   BackgroundRequest,
+  ClaudeInjectRequest,
   ContentRequest,
   SimpleResponse,
   TranslateBatchResponse,
@@ -197,12 +212,12 @@ async function handleTranslateBatch(
 /* ------------------------------------------------------------------ */
 
 /** 對 content script 送訊息；對方不存在時會 throw */
-function sendToTab<T>(tabId: number, message: ContentRequest): Promise<T> {
+function sendToTab<T>(tabId: number, message: ContentRequest | ClaudeInjectRequest): Promise<T> {
   return chrome.tabs.sendMessage(tabId, message);
 }
 
 /**
- * 確保網頁翻譯 content script 已存在於分頁中。
+ * 確保指定的 content script 已存在於分頁中。
  * 先 PING 試探；沒有回應才注入（避免重複注入）。
  *
  * 注入後必須輪詢 PING 等待就緒：CRXJS 的 ?script 產物是一個載入器，
@@ -210,14 +225,14 @@ function sendToTab<T>(tabId: number, message: ContentRequest): Promise<T> {
  * onMessage listener 可能尚未註冊，立刻送訊息會撞上
  * "Receiving end does not exist"。
  */
-async function ensureWebTranslateScript(tabId: number): Promise<void> {
+async function ensureScriptInTab(tabId: number, scriptFile: string): Promise<void> {
   try {
     await sendToTab(tabId, { type: 'PING' });
     return;
   } catch {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: [webTranslateScript],
+      files: [scriptFile],
     });
   }
 
@@ -230,6 +245,11 @@ async function ensureWebTranslateScript(tabId: number): Promise<void> {
     }
   }
   throw new Error('content script 注入後未回應');
+}
+
+/** 確保網頁翻譯 content script 已存在於分頁中 */
+function ensureWebTranslateScript(tabId: number): Promise<void> {
+  return ensureScriptInTab(tabId, webTranslateScript);
 }
 
 /** 切換指定分頁的翻譯狀態；回傳切換後是否為「翻譯中」 */
@@ -281,8 +301,194 @@ async function handleTestConnection(
 }
 
 /* ------------------------------------------------------------------ */
+/* 右鍵選單 Claude 助手（功能三）                                         */
+/* ------------------------------------------------------------------ */
+
+/** 右鍵選單項目 id 前綴：`bt-assistant-<AssistantAction>` */
+const ASSISTANT_MENU_PREFIX = 'bt-assistant-';
+
+/**
+ * 註冊右鍵選單項目（多個項目 Chrome 會自動收合於外掛名稱子選單）。
+ * documentUrlPatterns 限定 http/https，chrome:// 等受限頁不顯示。
+ * 「摘要此頁」加上 selection context，讓有選取文字時四項仍齊全。
+ */
+function registerAssistantMenus(): void {
+  chrome.contextMenus.removeAll(() => {
+    const documentUrlPatterns = ['http://*/*', 'https://*/*'];
+    const contextsOf: Record<AssistantAction, chrome.contextMenus.ContextType[]> = {
+      'summarize-page': ['page', 'selection'],
+      'summarize-selection': ['selection'],
+      'ask-selection': ['selection'],
+      'translate-selection': ['selection'],
+      'translate-summarize': ['selection'],
+    };
+    for (const action of ASSISTANT_ACTIONS) {
+      chrome.contextMenus.create({
+        id: `${ASSISTANT_MENU_PREFIX}${action}`,
+        title: ASSISTANT_ACTION_LABELS[action],
+        contexts: contextsOf[action],
+        documentUrlPatterns,
+      });
+    }
+  });
+}
+
+/**
+ * 動作 3、4 選到中文內容時，在原分頁跳 confirm 確認。
+ * confirm 注入失敗（罕見）視同確認，照常執行（fail-open，無費用損失）。
+ */
+async function confirmTranslateChinese(tabId: number): Promise<boolean> {
+  try {
+    const [result] = await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => window.confirm('選取內容看起來已是中文，仍要請 Claude 翻譯嗎？'),
+    });
+    return result?.result !== false;
+  } catch {
+    return true;
+  }
+}
+
+/** 等待分頁載入完成（逾時直接放行，後續由 PING 輪詢與 ?q= 備援兜底） */
+function waitForTabComplete(tabId: number, timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (): void => {
+      if (done) return;
+      done = true;
+      chrome.tabs.onUpdated.removeListener(listener);
+      clearTimeout(timer);
+      resolve();
+    };
+    const listener = (updatedTabId: number, changeInfo: chrome.tabs.TabChangeInfo): void => {
+      if (updatedTabId === tabId && changeInfo.status === 'complete') finish();
+    };
+    chrome.tabs.onUpdated.addListener(listener);
+    const timer = setTimeout(finish, timeoutMs);
+    // 掛上 listener 後補查一次目前狀態，避免恰好錯過 complete 事件
+    chrome.tabs
+      .get(tabId)
+      .then((tab) => {
+        if (tab.status === 'complete') finish();
+      })
+      .catch(finish);
+  });
+}
+
+/**
+ * 把組好的文字交棒到 claude.ai：開新分頁 → 注入 claude-inject script →
+ * ASSISTANT_FILL。注入失敗或找不到輸入框（claude.ai 可能已改版）時，
+ * 同分頁改走 ?q= 備援（截斷至保守上限）。
+ */
+async function handoffToClaude(text: string, autoSubmit: boolean): Promise<void> {
+  const created = await chrome.tabs.create({ url: 'https://claude.ai/new' });
+  if (created.id === undefined) return;
+  const tabId = created.id;
+
+  try {
+    await waitForTabComplete(tabId, 20000);
+    await ensureScriptInTab(tabId, claudeInjectScript);
+    const response = await sendToTab<AssistantFillResponse>(tabId, {
+      type: 'ASSISTANT_FILL',
+      text,
+      autoSubmit,
+    });
+    if (!response.filled) throw new Error(response.error ?? '填入失敗');
+  } catch (err) {
+    console.warn('[雙語翻譯] claude.ai 填入失敗，改走 ?q= 備援（claude.ai 可能已改版）', err);
+    try {
+      await chrome.tabs.update(tabId, { url: buildFallbackUrl(text) });
+    } catch {
+      // 分頁可能已被使用者關閉，備援無處可去，靜默結束
+    }
+  }
+}
+
+/**
+ * 動作 1：在原分頁執行頁面內容擷取（activeTab 已由右鍵點選單授予）。
+ * 擷取失敗（極罕見，選單已限定 http/https）退回「標題＋網址」帶入，
+ * 請 claude.ai 依網址自行讀取。
+ */
+async function extractPageForSummary(tab: chrome.tabs.Tab): Promise<PageExtractResult> {
+  if (tab.id !== undefined) {
+    try {
+      const [injection] = await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: extractPageContent,
+      });
+      const extracted = injection?.result;
+      if (extracted && extracted.content) return extracted;
+    } catch (err) {
+      console.warn('[雙語翻譯] 頁面內容擷取失敗，改以標題＋網址帶入', err);
+    }
+  }
+  return {
+    title: tab.title ?? '',
+    url: tab.url ?? '',
+    content: '（無法擷取頁面內容，請依「來源」網址自行讀取後再摘要）',
+  };
+}
+
+/** 右鍵選單點擊的主流程：取內容 → 中文確認 → 組帶入文字 → 交棒 claude.ai */
+async function handleAssistantAction(
+  action: AssistantAction,
+  info: chrome.contextMenus.OnClickData,
+  tab: chrome.tabs.Tab,
+): Promise<void> {
+  let content: string;
+  let pageUrl = info.pageUrl ?? tab.url ?? '';
+  let pageTitle = tab.title ?? '';
+
+  if (action === 'summarize-page') {
+    const extracted = await extractPageForSummary(tab);
+    content = extracted.content;
+    pageUrl = extracted.url || pageUrl;
+    pageTitle = extracted.title || pageTitle;
+  } else {
+    content = (info.selectionText ?? '').trim();
+    if (!content) return;
+
+    const needsChineseCheck = action === 'translate-selection' || action === 'translate-summarize';
+    if (needsChineseCheck && isMostlyChinese(content) && tab.id !== undefined) {
+      const confirmed = await confirmTranslateChinese(tab.id);
+      if (!confirmed) return;
+    }
+  }
+
+  const settings = await loadSettings();
+  const prompts = await loadAssistantPrompts();
+  const text = buildHandoffText(
+    prompts[action],
+    {
+      content,
+      page_url: pageUrl,
+      page_title: pageTitle,
+      target_lang_label: labelOf(settings.targetLang),
+    },
+    settings.assistantMaxChars,
+  );
+
+  await handoffToClaude(text, ASSISTANT_AUTO_SUBMIT[action]);
+}
+
+/* ------------------------------------------------------------------ */
 /* 事件註冊                                                             */
 /* ------------------------------------------------------------------ */
+
+// 右鍵選單：安裝／更新時重建（選單註冊持久存在，onClicked 會喚醒休眠的 SW）
+chrome.runtime.onInstalled.addListener(() => {
+  registerAssistantMenus();
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  const menuId = String(info.menuItemId);
+  if (!menuId.startsWith(ASSISTANT_MENU_PREFIX) || !tab) return;
+  const action = menuId.slice(ASSISTANT_MENU_PREFIX.length) as AssistantAction;
+  if (!ASSISTANT_ACTIONS.includes(action)) return;
+  void handleAssistantAction(action, info, tab).catch((err: unknown) => {
+    console.warn('[雙語翻譯] Claude 助手動作失敗', err);
+  });
+});
 
 // 快捷鍵：Alt+T 翻譯／還原目前分頁
 chrome.commands.onCommand.addListener((command) => {

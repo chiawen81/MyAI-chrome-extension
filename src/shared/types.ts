@@ -57,12 +57,19 @@ export interface Settings {
   maxCharsPerPage: number;
   /** YouTube 字幕每批翻譯的句數 */
   youtubeBatchSize: number;
+  /**
+   * 右鍵選單 Claude 助手：帶入 claude.ai 的內容字元上限
+   * （避免極端長頁面讓輸入框卡死；下限 500，見 shared/assistant-prompts.ts）
+   */
+  assistantMaxChars: number;
 }
 
 /* 跨 context 訊息協定定義於 shared/messages.ts，此處 re-export 維持既有 import 相容 */
 export type {
   BackgroundRequest,
   ContentRequest,
+  ClaudeInjectRequest,
+  AssistantFillResponse,
   TranslateBatchResponse,
   SimpleResponse,
 } from './messages';

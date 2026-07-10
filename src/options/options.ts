@@ -3,8 +3,23 @@
  * 所有欄位「改了就存」（不需按儲存鈕），右下角短暫顯示已儲存提示。
  * 分頁籤：翻譯服務 / 樣式 / AI 專家 / 進階。
  */
+import {
+  ASSISTANT_ACTIONS,
+  ASSISTANT_ACTION_LABELS,
+  DEFAULT_ASSISTANT_PROMPTS,
+  MIN_ASSISTANT_MAX_CHARS,
+  validateAssistantTemplate,
+  type AssistantPromptOverrides,
+} from '../shared/assistant-prompts';
 import { BUILTIN_EXPERTS } from '../shared/experts';
-import { loadCustomExperts, loadSettings, saveCustomExperts, saveSettings } from '../shared/settings';
+import {
+  loadAssistantPrompts,
+  loadCustomExperts,
+  loadSettings,
+  saveAssistantPrompts,
+  saveCustomExperts,
+  saveSettings,
+} from '../shared/settings';
 import { buildTranslationCss, TRANSLATION_ATTR } from '../shared/styles';
 import type { ExpertTemplate, ProviderId, Settings, SimpleResponse, StylePresetId } from '../shared/types';
 
@@ -14,17 +29,21 @@ function $<T extends HTMLElement>(selector: string): T {
 
 let settings: Settings;
 let customExperts: ExpertTemplate[];
+/** Claude 助手模板（與預設合併後的完整四筆；儲存時只寫回與預設不同的覆寫） */
+let assistantPrompts: Record<(typeof ASSISTANT_ACTIONS)[number], string>;
 
 void init();
 
 async function init(): Promise<void> {
   settings = await loadSettings();
   customExperts = await loadCustomExperts();
+  assistantPrompts = await loadAssistantPrompts();
 
   setupTabs();
   setupServiceTab();
   setupStyleTab();
   renderExpertList();
+  setupAssistantTab();
   setupAdvancedTab();
   void refreshCacheCount();
 
@@ -274,7 +293,83 @@ function renderExpertList(): void {
 }
 
 /* ------------------------------------------------------------------ */
-/* 分頁四：進階                                                         */
+/* 分頁四：Claude 助手                                                   */
+/* ------------------------------------------------------------------ */
+
+function setupAssistantTab(): void {
+  const list = $('#assistant-prompt-list');
+
+  for (const action of ASSISTANT_ACTIONS) {
+    const card = document.createElement('div');
+    card.className = 'expert-card';
+
+    const header = document.createElement('div');
+    header.className = 'expert-header';
+    const name = document.createElement('span');
+    name.className = 'expert-name';
+    name.textContent = ASSISTANT_ACTION_LABELS[action];
+    header.appendChild(name);
+
+    const textarea = document.createElement('textarea');
+    textarea.value = assistantPrompts[action];
+
+    const actions = document.createElement('div');
+    actions.className = 'expert-actions';
+    const resetButton = document.createElement('button');
+    resetButton.textContent = '還原預設';
+    actions.appendChild(resetButton);
+
+    // 改了就存（沿用全站模式）；驗證不過 alert 擋下、不寫入，保留輸入讓使用者修正
+    textarea.addEventListener('change', () => {
+      const value = textarea.value;
+      if (value.trim() === '') {
+        // 清空視為還原預設
+        textarea.value = DEFAULT_ASSISTANT_PROMPTS[action];
+        assistantPrompts[action] = DEFAULT_ASSISTANT_PROMPTS[action];
+        void persistAssistantPrompts();
+        return;
+      }
+      const error = validateAssistantTemplate(value);
+      if (error) {
+        alert(`「${ASSISTANT_ACTION_LABELS[action]}」的模板未儲存：${error}`);
+        return;
+      }
+      assistantPrompts[action] = value;
+      void persistAssistantPrompts();
+    });
+
+    resetButton.addEventListener('click', () => {
+      textarea.value = DEFAULT_ASSISTANT_PROMPTS[action];
+      assistantPrompts[action] = DEFAULT_ASSISTANT_PROMPTS[action];
+      void persistAssistantPrompts();
+    });
+
+    card.append(header, textarea, actions);
+    list.appendChild(card);
+  }
+
+  const maxChars = $<HTMLInputElement>('#assistant-max-chars');
+  maxChars.value = String(settings.assistantMaxChars);
+  maxChars.addEventListener('change', () => {
+    settings.assistantMaxChars = clampNumber(maxChars, MIN_ASSISTANT_MAX_CHARS, 1000000, 50000);
+    void persistSettings();
+  });
+}
+
+/** 只把「與預設不同」的模板寫回 sync（缺項讀取時自動退回預設） */
+async function persistAssistantPrompts(): Promise<void> {
+  const overrides: AssistantPromptOverrides = {};
+  for (const action of ASSISTANT_ACTIONS) {
+    if (assistantPrompts[action] !== DEFAULT_ASSISTANT_PROMPTS[action]) {
+      overrides[action] = assistantPrompts[action];
+    }
+  }
+  await saveAssistantPrompts(overrides);
+  flashSaved();
+}
+
+/* ------------------------------------------------------------------ */
+/* 分頁五：進階                                                         */
 /* ------------------------------------------------------------------ */
 
 function setupAdvancedTab(): void {

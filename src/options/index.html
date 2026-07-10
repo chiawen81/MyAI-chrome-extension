@@ -14,6 +14,7 @@
       <button class="tab active" data-tab="service">翻譯服務</button>
       <button class="tab" data-tab="style">樣式</button>
       <button class="tab" data-tab="experts">AI 專家</button>
+      <button class="tab" data-tab="assistant">Claude 助手</button>
       <button class="tab" data-tab="advanced">進階</button>
     </nav>
 
@@ -110,7 +111,22 @@
       <button id="add-expert" class="primary">＋ 新增自訂專家</button>
     </section>
 
-    <!-- 分頁四：進階 -->
+    <!-- 分頁四：Claude 助手（右鍵選單交棒 claude.ai） -->
+    <section id="tab-assistant" class="tab-panel">
+      <p class="note">
+        右鍵選單的各個動作會把內容帶入你自己的 claude.ai 對話（不呼叫 API、不扣費）。
+        以下可自訂各動作的帶入文字模板：必須包含 <code>{{content}}</code>（實際內容本體），
+        其他可用變數 <code>{{page_url}}</code>、<code>{{page_title}}</code>、
+        <code>{{target_lang_label}}</code>；單一模板上限 500 字元。
+      </p>
+      <div id="assistant-prompt-list"></div>
+      <div class="field">
+        <label for="assistant-max-chars">帶入內容字數上限（超過保留開頭截斷，避免輸入框卡頓）</label>
+        <input type="number" id="assistant-max-chars" min="500" step="1000" />
+      </div>
+    </section>
+
+    <!-- 分頁五：進階 -->
     <section id="tab-advanced" class="tab-panel">
       <div class="field">
         <label for="concurrency">並發請求數（同時進行的 API 請求上限）</label>

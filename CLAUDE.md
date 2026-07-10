@@ -36,7 +36,7 @@
 
 ## 詳細文件
 - docs/BOARD.md — 任務看板（發想／待辦／進行中／已完成；刻意不用 @ 引入以省 token，需要時才讀取）
-- @docs/ARCHITECTURE.md — 四執行環境職責、message passing 一覽、chrome.storage 資料結構、Provider 抽象層與擴充點、目錄結構
+- @docs/ARCHITECTURE.md — 執行環境職責、message passing 一覽、chrome.storage 資料結構、Provider 抽象層與擴充點、目錄結構
 - @docs/DEVELOPMENT.md — 命名規則；新增 AI 專家模板／譯文樣式／Provider 的具體步驟；環境需求與計畫歸檔流程
 - @docs/FEATURES.md — REQUIREMENTS.md 第 4 節驗收條件完成狀態＋各功能實際行為與已知限制
 - @docs/TESTING.md — vitest 單元測試規劃（scanner、快取 hash、批次對齊 fallback）＋手動驗收清單

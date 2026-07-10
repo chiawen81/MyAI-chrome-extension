@@ -1,6 +1,12 @@
 # CHANGELOG
 
 ## 2026-07-11
+- 新增功能三「右鍵選單 Claude 助手」（看板 #3＋#7）：http/https 頁面右鍵五動作——摘要此頁／摘要選取文字／帶入選取文字／翻譯／翻譯＋摘要，把內容「交棒」到使用者自己的 claude.ai 對話（開新分頁 → 注入 script 以 `execCommand('insertText')` 填入輸入框 → 除「帶入選取文字」外自動送出），外掛不呼叫 API、不扣費；注入失敗以 `?q=` 網址參數備援（上限 2,000 字元）
+  - 摘要此頁以 `executeScript({func})` 擷取主內容（語意容器內收段落區塊＋雜訊排除 → 共同祖先啟發式 → body 回退）；測試回饋後補強「容器內也套過濾」並在預設模板加擷取雜訊提醒
+  - 翻譯類動作選到中文（漢字 ≥ 50%）時原頁 confirm 確認；帶入內容超過 `assistantMaxChars`（預設 50,000）保留開頭截斷＋註記
+  - options 新增「Claude 助手」分頁：各動作模板可自訂（必含 `{{content}}`、≤ 500 字元、清空還原預設）＋帶入字數上限；模板覆寫存獨立 sync key `assistantPrompts`
+  - 新增權限：`contextMenus`＋`https://claude.ai/*` host；新訊息 `ASSISTANT_FILL`；claude.ai DOM 依賴依隔離慣例集中於 `content/claude-inject/`
+  - 計畫文件 `2026-07-10-context-menu-claude-actions.md` 完成並歸檔（含 §2.8-bis 實作增補）
 - 調整任務執行節奏規則（看板 #10）：實作類 task 連續執行到底，做到「文件同步與收尾」前停下等使用者驗收；必須先由使用者驗收／回報結果的 task（spike、需真實 key 的驗證等）於計畫階段標註建議停點。改動 CLAUDE.md 關鍵規則與 DEVELOPMENT.md 計畫流程第 2 步（原規則：每完成一個模組即停下）
 - 新增 docs/BOARD.md 任務看板：發想／待辦／進行中／已完成四欄，收納功能發想、bug、優化與 SDD 調整項目；項目帶全域流水編號（#N），有細節的項目與已完成區、使用約定（置於檔尾）均以 `<details>` 摺疊。CLAUDE.md 關鍵規則與 DEVELOPMENT.md 計畫流程接入看板維護（想法先上板 → 開工建計畫並連結 → 完成移入摺疊區）
 

@@ -2,20 +2,22 @@
 
 雙語對照翻譯 Chrome Extension（MV3）的架構文件。記錄跨模組開發／整合時必須知道的事。
 
-## 1. 四執行環境職責表
+## 1. 執行環境職責表
 
 | 環境 | 進入點 | 職責 | 注入方式 |
 |---|---|---|---|
-| Service Worker | `src/background/service-worker.ts` | 代理所有 AI API 請求（統一由此 fetch，繞過頁面 CSP/CORS）；翻譯快取讀寫；並發控制（semaphore）；快捷鍵 Alt+T；動態注入網頁翻譯 content script | manifest `background` |
+| Service Worker | `src/background/service-worker.ts` | 代理所有 AI API 請求（統一由此 fetch，繞過頁面 CSP/CORS）；翻譯快取讀寫；並發控制（semaphore）；快捷鍵 Alt+T；動態注入 content script；右鍵選單 Claude 助手（選單註冊、頁面擷取編排、交棒 claude.ai） | manifest `background` |
 | Content：網頁翻譯 | `src/content/web-translate/index.ts` | 段落掃描（IntersectionObserver 惰性翻譯）、譯文節點插入／移除、樣式注入、單頁字數上限 | **動態注入**（activeTab + scripting，由 background 在 toggle 時注入）|
 | Content：YouTube | `src/content/youtube/index.ts` | 播放器按鈕與面板、字幕軌取得、整批預翻譯、自繪字幕層、SPA 換片清理 | **靜態宣告**（manifest `content_scripts`，`*://*.youtube.com/*`，需在進頁時就監聽換片事件）|
+| Content：claude-inject | `src/content/claude-inject/index.ts` | Claude 助手：把帶入文字寫進 claude.ai 輸入框、視動作自動送出；**所有 claude.ai DOM 依賴集中此檔**（隔離慣例，同 subtitle-provider） | **動態注入**（host 權限 `https://claude.ai/*`，由 background 於右鍵動作開分頁後注入）|
 | Popup | `src/popup/popup.ts` | 翻譯／還原按鈕（經 background 轉發）、快速切換語言／供應商／專家（直接寫 storage） | manifest `action.default_popup` |
-| Options | `src/options/options.ts` | 四分頁設定（翻譯服務／樣式／AI 專家／進階）、測試連線（經 background）、清除快取 | manifest `options_ui` |
+| Options | `src/options/options.ts` | 五分頁設定（翻譯服務／樣式／AI 專家／Claude 助手／進階）、測試連線（經 background）、清除快取 | manifest `options_ui` |
 
 跨環境須知：
 
 - **網頁翻譯 script 可能被重複注入**（background 的 PING 逾時再注入），以 `window.__btWebTranslateLoaded` 旗標防重複初始化。
-- **注入後必須輪詢 PING 等待就緒**：CRXJS `?script` 的產物是載入器，會再以動態 import 非同步載入真正模組，`executeScript` resolve 時 onMessage listener 可能尚未註冊；background 的 `ensureWebTranslateScript` 注入後輪詢 PING（100ms × 最多 20 次）成功才轉發指令。
+- **注入後必須輪詢 PING 等待就緒**：CRXJS `?script` 的產物是載入器，會再以動態 import 非同步載入真正模組，`executeScript` resolve 時 onMessage listener 可能尚未註冊；background 的 `ensureScriptInTab`（網頁翻譯與 claude-inject 共用）注入後輪詢 PING（100ms × 最多 20 次）成功才轉發指令。
+- **頁面內容擷取不是 content script**：`src/content/page-extract.ts` 的 `extractPageContent` 是給 `executeScript({ func })` 序列化執行的**自包含函式**，不得引用任何 import／外層變數（改動時務必維持自包含）。
 - **semaphore 狀態存在 SW 記憶體**，SW 被 Chrome 休眠後歸零重來；不能依賴它做跨請求的持久狀態。
 - **YouTube content script 不經 background 存取快取**：整部影片的譯文快取由它直接讀寫 `chrome.storage.local`（`cache.ts` 的 `crypto.subtle` 在 https 頁面可用）。逐句翻譯仍走 background 的 `TRANSLATE_BATCH`。
 - `TOGGLE_TRANSLATE` 的回應是**同步**的：`enable()` 為 async，但立即回報 `active: true`，呼叫端不能假設回應時翻譯已開始。
@@ -43,6 +45,13 @@
 | `TOGGLE_TRANSLATE` | — | `{ active: boolean }` | 快捷鍵或 popup toggle |
 | `GET_STATE` | — | `{ active: boolean }` | popup 查詢狀態（script 不存在＝未翻譯） |
 
+### Background → claude-inject content script（`ClaudeInjectRequest`，經 `chrome.tabs.sendMessage`）
+
+| type | payload | 回應 | 觸發時機 |
+|---|---|---|---|
+| `PING` | — | `{ ok: true }` | 注入後輪詢等待就緒 |
+| `ASSISTANT_FILL` | `text: string`, `autoSubmit: boolean` | `AssistantFillResponse`（`ok / filled / submitted / error`；`filled: false` 時 background 走 `?q=` 備援） | 右鍵動作開啟 claude.ai 分頁、注入就緒後 |
+
 實作約定：background 的 onMessage listener 以「非同步回應」模式運作（回傳 `true` 後用 promise `sendResponse`）；不認得的 type 回傳 `false` 不處理（可能是給 content script 的訊息）。
 
 ## 3. chrome.storage 資料結構
@@ -51,8 +60,9 @@
 
 | key | 型別 | 內容 |
 |---|---|---|
-| `settings` | `Settings`（`shared/types.ts`） | 供應商選擇、兩組 API key＋模型、目標語言、專家 id、樣式、並發數、字數上限、YouTube 批次大小 |
+| `settings` | `Settings`（`shared/types.ts`） | 供應商選擇、兩組 API key＋模型、目標語言、專家 id、樣式、並發數、字數上限、YouTube 批次大小、Claude 助手帶入字數上限（`assistantMaxChars`） |
 | `customExperts` | `ExpertTemplate[]` | 自訂 AI 專家。**與 settings 分開存**就是為了避開單項 8KB 上限；prompt 過長仍會存檔失敗（options 已有 alert 提示） |
+| `assistantPrompts` | `Partial<Record<AssistantAction, string>>` | Claude 助手模板的**覆寫**（只存與預設不同的動作；沿用 customExperts 獨立 key 先例避開 8KB 上限）。讀取一律走 `loadAssistantPrompts()`：與預設合併、空字串／缺項退回預設 |
 
 - 讀取一律走 `loadSettings()`：會與 `DEFAULT_SETTINGS` 深合併，未來新增欄位時舊用戶資料不缺欄。**新增設定欄位時記得同步更新 `DEFAULT_SETTINGS` 與合併邏輯**（巢狀物件要逐層 spread）。
 - 任何 context 用 `onSettingsChanged()` 監聽變更（樣式即時套用即靠此機制）。
@@ -95,8 +105,11 @@ manifest.config.ts                 # MV3 manifest（CRXJS defineManifest；權�
 vite.config.ts                     # CRXJS 打包；minify 關閉（方便審核與除錯）
 scripts/gen-icons.mjs              # 產生 public/icons 的四種尺寸圖示
 src/
-  background/service-worker.ts     # 訊息總入口、API 代理、快取、semaphore、快捷鍵、動態注入
+  background/service-worker.ts     # 訊息總入口、API 代理、快取、semaphore、快捷鍵、動態注入、右鍵選單 Claude 助手編排
   content/
+    claude-inject/
+      index.ts                     # 功能三：把帶入文字寫進 claude.ai 輸入框並視動作送出（claude.ai DOM 依賴集中此檔）
+    page-extract.ts                # 功能三「摘要此頁」的主內容擷取（executeScript({func}) 用的自包含函式，禁 import）
     web-translate/
       index.ts                     # 功能一進入點：toggle 狀態機、批次收集（400ms 窗口）＋小組漸進送翻、字數上限、toast
       scanner.ts                   # 段落掃描：BLOCK_SELECTOR 篩選 + IntersectionObserver + MutationObserver
@@ -113,6 +126,7 @@ src/
   popup/                           # 快捷面板（index.html / popup.ts / popup.css）
   options/                         # 設定頁（index.html / options.ts / options.css）
   shared/
+    assistant-prompts.ts           # 功能三：動作定義、預設模板、中文判斷/截斷/備援網址/模板驗證等純函式
     messages.ts                    # 跨 context 訊息協定（唯一定義處）
     types.ts                       # Settings 等資料結構型別；re-export messages
     settings.ts                    # 設定讀寫 + 預設值合併 + onSettingsChanged

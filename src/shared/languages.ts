@@ -26,3 +26,9 @@ export function promptNameOf(code: string): string {
   const found = LANGUAGES.find((lang) => lang.code === code);
   return found ? found.promptName : code;
 }
+
+/** 依語言代碼取得 UI 顯示名稱；找不到時回傳代碼本身（Claude 助手指示句等處使用） */
+export function labelOf(code: string): string {
+  const found = LANGUAGES.find((lang) => lang.code === code);
+  return found ? found.label : code;
+}
