@@ -1,0 +1,8 @@
+{
+  // .md 檔預設用 Markdown 預覽開啟
+  "workbench.editorAssociations": {
+    "*.md": "vscode.markdown.preview.editor"
+  },
+  // 在預覽上點擊兩下 → 同一個頁籤內切回程式碼編輯模式
+  "markdown.preview.doubleClickToSwitchToEditor": true
+}

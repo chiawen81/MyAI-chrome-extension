@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <title>雙語對照翻譯</title>
+    <link rel="stylesheet" href="./popup.css" />
+  </head>
+  <body>
+    <!-- 主要動作：翻譯 / 還原目前頁面 -->
+    <button id="toggle-btn" class="primary">翻譯此頁</button>
+    <p id="toggle-hint" class="hint">快捷鍵 Alt+T</p>
+
+    <!-- 快速切換：目標語言 / 供應商 / AI 專家 -->
+    <div class="field">
+      <label for="target-lang">目標語言</label>
+      <select id="target-lang"></select>
+    </div>
+
+    <div class="field">
+      <label for="provider">翻譯服務</label>
+      <select id="provider">
+        <option value="claude">Claude</option>
+        <option value="openai">OpenAI</option>
+      </select>
+      <div id="model-name" class="model-name"></div>
+    </div>
+
+    <div class="field">
+      <label for="expert">AI 專家</label>
+      <select id="expert"></select>
+    </div>
+
+    <div class="footer">
+      <a id="open-options" href="#">開啟設定</a>
+    </div>
+
+    <script type="module" src="./popup.ts"></script>
+  </body>
+</html>

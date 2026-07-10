@@ -1,0 +1,78 @@
+/* Popup 快捷面板的樣式 */
+body {
+  width: 240px;
+  margin: 0;
+  padding: 14px;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 13px;
+  color: #222;
+}
+
+button.primary {
+  width: 100%;
+  padding: 9px 0;
+  border: none;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button.primary:hover {
+  background: #1d4ed8;
+}
+
+/* 翻譯中 → 按鈕變成「還原原文」時的視覺區別 */
+button.primary.active {
+  background: #6b7280;
+}
+
+.hint {
+  margin: 6px 0 12px;
+  text-align: center;
+  color: #888;
+  font-size: 11px;
+}
+
+.field {
+  margin-bottom: 10px;
+}
+
+.field label {
+  display: block;
+  margin-bottom: 3px;
+  color: #555;
+}
+
+.field select {
+  width: 100%;
+  padding: 5px 6px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.model-name {
+  margin-top: 3px;
+  color: #888;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #eee;
+  text-align: center;
+}
+
+.footer a {
+  color: #2563eb;
+  text-decoration: none;
+  font-size: 12px;
+}

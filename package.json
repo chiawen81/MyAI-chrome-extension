@@ -1,0 +1,19 @@
+{
+  "name": "bilingual-translate-extension",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "雙語對照翻譯 Chrome 外掛（網頁雙語翻譯 + YouTube 雙語字幕）",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run icons && tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "icons": "node scripts/gen-icons.mjs"
+  },
+  "devDependencies": {
+    "@crxjs/vite-plugin": "^2.7.1",
+    "@types/chrome": "^0.0.287",
+    "typescript": "^5.7.2",
+    "vite": "^7.3.6"
+  }
+}

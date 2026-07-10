@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>雙語對照翻譯 — 設定</title>
+    <link rel="stylesheet" href="./options.css" />
+  </head>
+  <body>
+    <h1>雙語對照翻譯 — 設定</h1>
+
+    <!-- 分頁籤 -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="service">翻譯服務</button>
+      <button class="tab" data-tab="style">樣式</button>
+      <button class="tab" data-tab="experts">AI 專家</button>
+      <button class="tab" data-tab="advanced">進階</button>
+    </nav>
+
+    <!-- 分頁一：翻譯服務 -->
+    <section id="tab-service" class="tab-panel active">
+      <div class="field">
+        <label for="provider">使用的翻譯服務</label>
+        <select id="provider">
+          <option value="claude">Anthropic Claude</option>
+          <option value="openai">OpenAI</option>
+        </select>
+      </div>
+
+      <fieldset>
+        <legend>Anthropic Claude</legend>
+        <div class="field">
+          <label for="claude-key">API Key</label>
+          <input type="password" id="claude-key" placeholder="sk-ant-..." autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="claude-model">模型名稱</label>
+          <input type="text" id="claude-model" placeholder="例如 claude-opus-4-8" />
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>OpenAI</legend>
+        <div class="field">
+          <label for="openai-key">API Key</label>
+          <input type="password" id="openai-key" placeholder="sk-..." autocomplete="off" />
+        </div>
+        <div class="field">
+          <label for="openai-model">模型名稱</label>
+          <input type="text" id="openai-model" placeholder="例如 gpt-4o-mini" />
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <button id="test-connection" class="primary">測試連線</button>
+        <span id="test-result"></span>
+      </div>
+
+      <p class="note">
+        API key 僅儲存在瀏覽器的 chrome.storage 中，直接連向官方 API，不會經過任何第三方伺服器。
+      </p>
+    </section>
+
+    <!-- 分頁二：樣式 -->
+    <section id="tab-style" class="tab-panel">
+      <div class="field">
+        <label for="style-preset">預設樣式</label>
+        <select id="style-preset">
+          <option value="none">無樣式（與原文相同）</option>
+          <option value="dashed">虛線底線</option>
+          <option value="marker">馬克筆（背景高亮）</option>
+          <option value="quote">引用（左側豎線＋縮排）</option>
+        </select>
+      </div>
+
+      <fieldset>
+        <legend>進階自訂（留空代表沿用原文）</legend>
+        <div class="field">
+          <label for="style-color">文字顏色（如 #1a73e8 或 royalblue）</label>
+          <input type="text" id="style-color" placeholder="留空 = 不覆寫" />
+        </div>
+        <div class="field">
+          <label for="style-bg">背景顏色</label>
+          <input type="text" id="style-bg" placeholder="留空 = 不覆寫" />
+        </div>
+        <div class="field">
+          <label for="style-size">字體大小（%）</label>
+          <input type="number" id="style-size" min="50" max="200" step="5" />
+        </div>
+        <div class="field">
+          <label for="style-font">字型</label>
+          <input type="text" id="style-font" placeholder='例如 "Noto Sans TC", sans-serif' />
+        </div>
+      </fieldset>
+
+      <div class="preview-box">
+        <p class="preview-original">This is the original paragraph used for preview.</p>
+        <span id="style-preview">這是譯文的即時預覽，樣式變更會立即反映在這裡。</span>
+      </div>
+      <p class="note">樣式變更會即時套用到已翻譯的頁面，不需重新翻譯。</p>
+    </section>
+
+    <!-- 分頁三：AI 專家 -->
+    <section id="tab-experts" class="tab-panel">
+      <p class="note">
+        AI 專家是一段 system prompt 模板，決定翻譯的風格與規則。可使用變數
+        <code>{{source_lang}}</code>、<code>{{target_lang}}</code>（由系統自動代入）。
+      </p>
+      <div id="expert-list"></div>
+      <button id="add-expert" class="primary">＋ 新增自訂專家</button>
+    </section>
+
+    <!-- 分頁四：進階 -->
+    <section id="tab-advanced" class="tab-panel">
+      <div class="field">
+        <label for="concurrency">並發請求數（同時進行的 API 請求上限）</label>
+        <input type="number" id="concurrency" min="1" max="10" />
+      </div>
+      <div class="field">
+        <label for="max-chars">單頁最大翻譯字數（防止 API 費用暴衝）</label>
+        <input type="number" id="max-chars" min="1000" step="1000" />
+      </div>
+      <div class="field">
+        <label for="yt-batch">YouTube 字幕每批句數</label>
+        <input type="number" id="yt-batch" min="10" max="100" step="5" />
+      </div>
+
+      <fieldset>
+        <legend>翻譯快取</legend>
+        <p>快取筆數：<span id="cache-count">…</span></p>
+        <button id="clear-cache" class="danger">清除快取</button>
+        <span id="clear-cache-result"></span>
+      </fieldset>
+    </section>
+
+    <p id="save-indicator" class="save-indicator"></p>
+
+    <script type="module" src="./options.ts"></script>
+  </body>
+</html>
