@@ -63,6 +63,26 @@
 2. 實作類 task 連續執行到底，做到「文件同步與收尾」task 前停下，請使用者到 `chrome://extensions` 手動驗收，通過後才收尾。例外：必須先由使用者驗收或回報結果才能繼續的 task（如依賴外部頁面結構的 spike、需真實 API key 的驗證），在建計畫時就判斷並於 Tasks 標註建議停點。
 3. 完成後：計畫文件移至 `docs/plans/archive/`，看板項目移入 ✅ 已完成摺疊區（加日期），並做文件同步檢查——行為變更 → FEATURES.md；新增 message／storage key／Provider → ARCHITECTURE.md；一律 → CHANGELOG.md。
 
+## Spike 驗證方法（依賴未公開結構的前置驗證）
+
+功能若立足於外部服務的未公開結構（claude.ai 的 DOM／URL 參數、YouTube 頁面結構），實作前先做 Task 0 式 spike：結論回填計畫文件的 Spec，原始腳本與執行紀錄收計畫附錄（供改版時重跑比對）。既有紀錄：
+
+- claude.ai 注入行為（輸入框／送出鈕／`?q=`／未登入）：[plans/archive/2026-07-10-context-menu-claude-actions.md](plans/archive/2026-07-10-context-menu-claude-actions.md) 附錄
+- claude.ai 模型切換（`?model=` slug／DOM 選單結構／**持久性語意**）：[plans/2026-07-11-assistant-model-select.md](plans/2026-07-11-assistant-model-select.md) §2.1＋附錄
+
+### 自動化執行（2026-07-11 由 #6 spike 建立的做法）
+
+需要登入態的 spike 可請 Claude Code 以 Playwright（CDP）驅動真實 Chrome 自動執行，取代人工在 DevTools Console 逐段貼腳本：
+
+1. 以**拋棄式 profile 另起獨立 Chrome 實例**（不動使用者工作中的瀏覽器；偵錯參數只在程序啟動時生效，無法接管已開啟的 Chrome）：
+   `chrome.exe --user-data-dir=<暫存目錄> --remote-debugging-port=9223 <目標網址>`
+2. 使用者在該視窗**登入一次**目標服務（登入態存在拋棄式 profile 裡，用完即棄）。
+3. 暫存目錄 `npm i playwright-core`（不進專案依賴），`chromium.connectOverCDP('http://localhost:9223')` 取得 context，以 `page.evaluate` 執行驗證邏輯、`page.screenshot` 留證（需人工判讀的畫面交使用者確認）。
+4. 關鍵結論用**行為實測**而非推測：例如「切換是否污染帳號預設」以另開乾淨分頁讀取實際狀態驗證。
+5. 收尾原則：**還原被改動的帳號狀態**（#6 spike 中 DOM 切換模型會改帳號預設，結束時切回原值並驗證）；主動告知測試留下的痕跡（如測試對話）供使用者刪除。
+
+注意：程式化操作目標服務與功能本身同屬 ToS 灰色地帶（本機自用、風險等級同功能）；此法僅用於開發期驗證，不進產品程式碼。
+
 ## 硬性約束（改動前必讀）
 
 - REQUIREMENTS.md 0-A 節：無後端、無遠端程式碼（eval／遠端 script 禁用）、權限最小化、YouTube 字幕只在使用者 session 內取得。
