@@ -8,7 +8,7 @@ disable-model-invocation: true
 
 1. docs/plans/$ARGUMENTS 移至 docs/plans/archive/
    （若輸入未含 .md 副檔名或路徑，請自行補全；找不到該檔案時停下向我確認，不要猜）
-2. FEATURES.md：更新此功能狀態與行為描述（含已知限制）
-3. CHANGELOG.md：補上本次變更
-4. 檢查本次開發是否新增 message／storage key／Provider，有則同步 ARCHITECTURE.md
+2. docs/reference/FEATURES.md：更新此功能狀態與行為描述（含已知限制）
+3. docs/reference/CHANGELOG.md：補上本次變更
+4. 檢查本次開發是否新增 message／storage key／Provider，有則同步 docs/reference/ARCHITECTURE.md
 5. 列出你這次同步了哪些文件讓我核對

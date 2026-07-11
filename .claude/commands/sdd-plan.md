@@ -11,7 +11,7 @@ disable-model-invocation: true
 請從上述輸入解析出「功能名稱」與「需求描述（使用者要達成什麼）」兩部分；
 規格書對應章節請自行查閱 REQUIREMENTS.md 比對，找不到對應則標註「無，為新需求」。
 
-輸出至 docs/plans/<今天日期 YYYY-MM-DD>-<feature-slug>.md，結構：
+輸出至 docs/plans/<今天日期 YYYY-MM-DD>-<功能中文描述>.md，結構：
 1. User Story（身為…我想要…以便…）
 2. Spec（具體行為、邊界條件、錯誤處理、驗收標準——驗收標準必須可勾選）
 3. Tasks（拆成可獨立完成的步驟，每步標註影響的檔案）

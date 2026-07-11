@@ -43,7 +43,7 @@ model: sonnet
 
 ## 步驟 4：commit
 
-1. 先讀 `docs/COMMIT-CONVENTION.md`，依規範撰寫訊息（`type(中文scope)` 標題＋數字列點 body＋Co-Authored-By 署名）。
+1. 先讀 `docs/reference/COMMIT-CONVENTION.md`，依規範撰寫訊息（`type(中文scope)` 標題＋數字列點 body＋Co-Authored-By 署名）。
 2. `git diff --cached --stat` 最後確認檔案清單與預期一致（防止其他視窗在你操作期間 stage 了東西）。
 3. `git commit`——**不要用 `-a`**，只 commit 已 staged 的內容。
 4. 若遇到 `index.lock` 錯誤，是其他視窗同時在跑 git，稍候幾秒重試。

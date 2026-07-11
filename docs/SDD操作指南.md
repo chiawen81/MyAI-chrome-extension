@@ -1,7 +1,7 @@
-# SDD 操作指南（docs/SDD-GUIDE.md）
+# SDD 操作指南（docs/SDD操作指南.md）
 
 > **閱讀對象**：開發者本人（這份文件給人看，不是給 AI 執行的指令）
-> **放置位置**：專案 `docs/SDD-GUIDE.md`
+> **放置位置**：專案 `docs/SDD操作指南.md`
 > **搭配前提**：CLAUDE.md 已含「計畫歸檔流程」與「文件同步檢查」兩條關鍵規則
 
 ## 🔸 本文件的使用方式（先讀這段）
@@ -77,7 +77,7 @@
 ```
 產生計畫 → 人工審閱 Spec →(不滿意→改計畫，循環)→ 依計畫實作
    │                                                  │
-   └── 產出 docs/plans/YYYY-MM-DD-<feature>.md        ▼
+   └── 產出 docs/plans/YYYY-MM-DD-<中文描述>.md        ▼
                                             逐 Task 實作＋勾選
                                                       │
                                                       ▼
@@ -98,7 +98,7 @@
 需求描述：{{一段話描述使用者要達成什麼}}
 規格書對應章節：REQUIREMENTS.md {{章節編號，無則填「無，為新需求」}}
 
-輸出至 docs/plans/{{今天日期 YYYY-MM-DD}}-{{feature-slug}}.md，結構：
+輸出至 docs/plans/{{今天日期 YYYY-MM-DD}}-{{功能中文描述}}.md，結構：
 1. User Story（身為…我想要…以便…）
 2. Spec（具體行為、邊界條件、錯誤處理、驗收標準——驗收標準必須可勾選）
 3. Tasks（拆成可獨立完成的步驟，每步標註影響的檔案）
@@ -131,7 +131,7 @@
 我的疑慮：{{技術可行性／與現有架構的衝突／成本，擇要填}}
 
 請：
-1. 先閱讀 ARCHITECTURE.md 與 REQUIREMENTS.md，評估此想法與現有架構的相容性
+1. 先閱讀 docs/reference/ARCHITECTURE.md 與 REQUIREMENTS.md，評估此想法與現有架構的相容性
 2. 提出 2~3 個實作方向（各一段），標出你推薦的一個＋理由
 3. 等我選定方向後，再產出計畫文件草稿至 docs/plans/（標註 status: draft）
 ```
@@ -157,7 +157,7 @@ Bug 小修（單一檔案、不改變對外行為）：
 要求：
 1. 修復前先說明根因，經我確認後再改
 2. 修改範圍若超出單一檔案或會改變對外行為，停下改走 Fix 計畫流程
-3. 完成後在 CHANGELOG.md 補一行紀錄
+3. 完成後在 docs/reference/CHANGELOG.md 補一行紀錄
 ```
 
 ---
@@ -175,11 +175,11 @@ Bug 修復（需要計畫）：
 重現步驟：{{步驟}}
 影響範圍推測：{{已知會動到的模組，不確定可留白}}
 
-請先建立 docs/plans/{{今天日期}}-fix-{{問題-slug}}.md：
+請先建立 docs/plans/{{今天日期}}-修復-{{問題中文描述}}.md：
 1. Spec 段寫「根因分析 → 現況 vs 預期行為 → 修復方案」
 2. Tasks 拆步驟，標註影響檔案與是否改變對外行為
 產出後停下等我確認，再依計畫修復。
-完成後同步：CHANGELOG.md 一律更新；若對外行為改變，同步 FEATURES.md。
+完成後同步：docs/reference/CHANGELOG.md 一律更新；若對外行為改變，同步 docs/reference/FEATURES.md。
 ```
 
 ---
@@ -217,9 +217,9 @@ CLAUDE.md 的同步規則會讓 Claude Code 在任務尾聲自動做，但**功�
 ```
 {{功能名稱}} 已通過手動驗收，請執行完成收尾：
 1. docs/plans/{{計畫檔名}}.md 移至 docs/plans/archive/
-2. FEATURES.md：更新此功能狀態與行為描述（含已知限制）
-3. CHANGELOG.md：補上本次變更
-4. 檢查本次開發是否新增 message／storage key／Provider，有則同步 ARCHITECTURE.md
+2. docs/reference/FEATURES.md：更新此功能狀態與行為描述（含已知限制）
+3. docs/reference/CHANGELOG.md：補上本次變更
+4. 檢查本次開發是否新增 message／storage key／Provider，有則同步 docs/reference/ARCHITECTURE.md
 5. 列出你這次同步了哪些文件讓我核對
 ```
 
@@ -227,8 +227,8 @@ CLAUDE.md 的同步規則會讓 Claude Code 在任務尾聲自動做，但**功�
 
 ```
 請執行文件與程式碼的脫鉤稽核：
-1. 逐一核對 ARCHITECTURE.md 的 message 表／storage 結構／目錄結構是否與現有程式碼一致
-2. 核對 FEATURES.md 各功能描述與實際行為是否一致
+1. 逐一核對 docs/reference/ARCHITECTURE.md 的 message 表／storage 結構／目錄結構是否與現有程式碼一致
+2. 核對 docs/reference/FEATURES.md 各功能描述與實際行為是否一致
 3. 只列出不一致清單與修正建議，經我確認後再修改文件
 ```
 
@@ -264,7 +264,7 @@ skill 分兩個層級：**專案層級**（`.claude/skills/`，隨 repo 版控�
 **行為摘要**：
 1. 盤點本對話中實際改動的檔案（不用 git status 反推，避免撈到其他視窗的檔案）
 2. 同一檔案被多視窗改到時，以「HEAD 版重套本對話修改 → 寫進 index」做選擇性 staging，工作目錄不動
-3. 依 COMMIT-CONVENTION.md 撰寫訊息後 commit（不用 `-a`）
+3. 依 docs/reference/COMMIT-CONVENTION.md 撰寫訊息後 commit（不用 `-a`）
 4. commit 後回報：hash＋檔案清單＋**token 用量與 Claude API 等值費用**（分「本段：自上次成功 commit 後」與「視窗累計」兩組；同視窗第二次執行時只有新增用量算進本段）
 
 **注意事項**：
@@ -278,7 +278,7 @@ skill 分兩個層級：**專案層級**（`.claude/skills/`，隨 repo 版控�
 ```
 請建立三個 slash commands 於 .claude/commands/：
 
-1. sdd-plan.md — 內容為本專案 docs/SDD-GUIDE.md 場景一範本 1-A，
+1. sdd-plan.md — 內容為本專案 docs/SDD操作指南.md 場景一範本 1-A，
    將挖空欄位改為 $ARGUMENTS 承接（用法：/sdd-plan 功能名稱＋一句需求）
 2. sdd-fix.md — 對應範本 3-A，$ARGUMENTS 承接現象描述
 3. sdd-done.md — 對應範本 6-A，$ARGUMENTS 承接計畫檔名

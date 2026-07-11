@@ -58,8 +58,8 @@
 
 ## 計畫與文件流程（沿用 CLAUDE.md 規則）
 
-0. 想法先上 `docs/BOARD.md` 任務看板（💡 發想／📥 待辦），一行即可，不急著開計畫文件；看板使用約定（含編號規則）收納於該檔末段。
-1. 決定開工後在 `docs/plans/` 建 `YYYY-MM-DD-<feature>.md`（User Story → Spec → Tasks），看板項目移到 🚧 進行中並回填計畫連結。
+0. 想法先上 `docs/任務看板.md`（💡 發想／📥 待辦），一行即可，不急著開計畫文件；看板使用約定（含編號規則）收納於該檔末段。
+1. 決定開工後在 `docs/plans/` 建 `YYYY-MM-DD-<中文描述>.md`（User Story → Spec → Tasks），看板項目移到 🚧 進行中並回填計畫連結。
 2. 實作類 task 連續執行到底，做到「文件同步與收尾」task 前停下，請使用者到 `chrome://extensions` 手動驗收，通過後才收尾。例外：必須先由使用者驗收或回報結果才能繼續的 task（如依賴外部頁面結構的 spike、需真實 API key 的驗證），在建計畫時就判斷並於 Tasks 標註建議停點。
 3. 完成後：計畫文件移至 `docs/plans/archive/`，看板項目移入 ✅ 已完成摺疊區（加日期），並做文件同步檢查——行為變更 → FEATURES.md；新增 message／storage key／Provider → ARCHITECTURE.md；一律 → CHANGELOG.md。
 
@@ -67,8 +67,8 @@
 
 功能若立足於外部服務的未公開結構（claude.ai 的 DOM／URL 參數、YouTube 頁面結構），實作前先做 Task 0 式 spike：結論回填計畫文件的 Spec，原始腳本與執行紀錄收計畫附錄（供改版時重跑比對）。既有紀錄：
 
-- claude.ai 注入行為（輸入框／送出鈕／`?q=`／未登入）：[plans/archive/2026-07-10-context-menu-claude-actions.md](plans/archive/2026-07-10-context-menu-claude-actions.md) 附錄
-- claude.ai 模型切換（`?model=` slug／DOM 選單結構／**持久性語意**）：[plans/archive/2026-07-11-assistant-model-select.md](plans/archive/2026-07-11-assistant-model-select.md) §2.1＋附錄（含驗收後修正：claude.ai 以上次使用模型為新對話預設）
+- claude.ai 注入行為（輸入框／送出鈕／`?q=`／未登入）：[plans/archive/2026-07-10-context-menu-claude-actions.md](../plans/archive/2026-07-10-context-menu-claude-actions.md) 附錄
+- claude.ai 模型切換（`?model=` slug／DOM 選單結構／**持久性語意**）：[plans/archive/2026-07-11-assistant-model-select.md](../plans/archive/2026-07-11-assistant-model-select.md) §2.1＋附錄（含驗收後修正：claude.ai 以上次使用模型為新對話預設）
 
 ### 自動化執行（2026-07-11 由 #6 spike 建立的做法）
 
