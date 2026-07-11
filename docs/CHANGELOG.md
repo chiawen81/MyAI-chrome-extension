@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## 2026-07-11
+- `/commit-session` skill 增補步驟 6：commit 後統計本視窗 token 用量並換算 Claude API 等值費用（新增 `count-session-tokens.py`，讀 session 逐字稿依 requestId 去重、按模型分組計價；定價表寫死於腳本）；同視窗多次 commit 時以 scratchpad 標記檔分段，回報「本段（自上次成功 commit 後）」與「視窗累計」兩組數字，步驟 1 同步加註「已成功 commit 過即只盤點其後異動」避免重跑空 diff；步驟 2 改為一次 `git diff` 帶入全部檔案再逐檔判讀（原逐檔各跑一次，每輪工具呼叫都重讀整個對話 context，N 檔 N 輪是主要 token 浪費點）；`/commit-session` 用法納入 docs/SDD-GUIDE.md 第 7 節（新增 7.1 小節與自動化評估表格列）
 - 新增專案 skill `/commit-session`（`.claude/skills/commit-session/SKILL.md`）：只 commit 當前視窗（對話）異動的檔案；同一檔案被多視窗編輯時，以「HEAD 版重套自己的修改 → hash-object 寫進 index」選擇性 staging，不夾帶其他視窗未收尾的修改。看板同日新增 #14（用 Claude Design 優化 UI/UX）
 - 完成看板 #6 前置 spike（claude.ai 模型切換可行性）並定案機制：URL 參數 `?model=<slug>` 有效、每分頁獨立、**不污染帳號預設模型**、可與 `?q=` 併用；DOM 操作選單雖可行但會永久改掉帳號預設（伺服器端）故不採。計畫文件 `2026-07-11-assistant-model-select.md` 建立（審閱通過：依動作各選模型），spike 原始紀錄收計畫附錄
 - DEVELOPMENT.md 新增「Spike 驗證方法」節：Task 0 式 spike 慣例（結論回填 Spec、腳本收附錄供改版重跑）＋自動化執行做法（Playwright CDP 驅動拋棄式 profile 的獨立 Chrome 實例，使用者登入一次後全自動；含「關鍵結論用行為實測」與「收尾還原帳號狀態」原則）——由 #6 spike 實務歸納，供後續評估依賴未公開結構的新功能參考

@@ -208,8 +208,30 @@ CLAUDE.md 的同步規則會讓 Claude Code 在任務尾聲自動做，但**功�
 | 6-A 完成收尾 | **slash command** `/sdd-done` | 步驟固定，最容易被遺忘，自動化價值最高 |
 | 文件同步提醒 | **hook**（第二階段再做） | Stop hook 可在每次任務結束時檢查提醒，但 hook 設定語法版本差異大 ⚠️ 需自行驗證當前 Claude Code hooks 文件 |
 | 整套 SDD 流程 | **skill：現階段不建議** | skill 適合封裝跨專案的複雜能力；單人單專案下 CLAUDE.md 規則＋slash commands 已覆蓋，再加 skill 只是多一層維護 |
+| 多視窗並行時的段落收尾 commit | **skill** `/commit-session`（✅ 已建置） | 需要盤點「本對話改過哪些檔案」並判斷 diff hunk 歸屬，靠模型推理而非固定填空範本，slash command 做不到 |
 
 判斷原則：**高頻＋固定結構 → slash command；需要「強制執行」而非「主動記得」→ hook；跨專案可攜的能力包 → skill**。
+
+### 7.1 已建置 skill：/commit-session
+
+**用途**：多個 Claude Code 視窗同時在本專案工作時，只把「當前視窗（本次對話）」造成的檔案異動 commit，不夾帶其他視窗未收尾的修改。
+
+**觸發方式**（三者等價）：
+- 輸入 `/commit-session`
+- 說「commit 這個視窗的異動」
+- 說「到一個段落了幫我 commit」
+
+**行為摘要**：
+1. 盤點本對話中實際改動的檔案（不用 git status 反推，避免撈到其他視窗的檔案）
+2. 同一檔案被多視窗改到時，以「HEAD 版重套本對話修改 → 寫進 index」做選擇性 staging，工作目錄不動
+3. 依 COMMIT-CONVENTION.md 撰寫訊息後 commit（不用 `-a`）
+4. commit 後回報：hash＋檔案清單＋**token 用量與 Claude API 等值費用**（分「本段：自上次成功 commit 後」與「視窗累計」兩組；同視窗第二次執行時只有新增用量算進本段）
+
+**注意事項**：
+- hunk 歸屬無法確定、或兩視窗改到同一行時，會停下來問你，不會猜
+- 對話經過 context 壓縮時檔案清單可能有遺漏，回報中會註明
+- 費用是「若走 API 計價」的等值估算（訂閱方案實際不按 token 扣費）；統計含 system prompt 與 cache 用量，token 數看起來大是正常的，占大宗的 cache 讀取單價僅為 input 的 1/10
+- 定義檔：`.claude/skills/commit-session/SKILL.md`＋`count-session-tokens.py`（定價表寫死在腳本內，新模型需手動更新）
 
 **一次性建置指令**（貼給 Claude Code 執行一次）：
 
