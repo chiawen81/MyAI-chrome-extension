@@ -83,6 +83,8 @@
 <details>
 <summary>✅ 已完成（點擊展開）</summary>
 
+- 2026-07-11 #16 [SDD] SDD-GUIDE.md 場景分派流程圖加註指令鏈＋第 7 節納入 /pim-note、/meta-learning 兩個使用者層級 skill — 詳見 CHANGELOG
+- 2026-07-11 #15 [SDD] 新增並優化 `/commit-session` skill（只 commit 當前視窗異動＋收尾回報 token 費用） — 詳見 CHANGELOG
 - 2026-07-11 #6 [功能] Claude 助手：交棒時依動作指定 claude.ai 模型（URL 參數 `?model=`）— [plans/archive/2026-07-11-assistant-model-select.md](plans/archive/2026-07-11-assistant-model-select.md)
 - 2026-07-11 #3 [功能] 右鍵選單 Claude 助手（五動作交棒 claude.ai）— [plans/archive/2026-07-10-context-menu-claude-actions.md](plans/archive/2026-07-10-context-menu-claude-actions.md)
 - 2026-07-11 #7 [功能] Claude 助手：新增「請 Claude 摘要選取文字」動作 — 併入 #3 計畫（見其 §2.8-bis）
@@ -102,7 +104,7 @@
 
 - 狀態流：💡 發想 → 📥 待辦 → 🚧 進行中 → ✅ 已完成（收進摺疊區）。
 - 每個項目一律用 `<details>` 收納：`<summary>` 放 `#編號 [類型] 標題`，展開內容放細節（背景、決策、連結、下一步）；類型四種：`[功能]`、`[Bug]`、`[優化]`、`[SDD]`。
-- 編號為全域流水號，跨欄位不重複、刪除不回收；**下一個編號：#15**（新增項目後記得遞增此數字）。
+- 編號為全域流水號，跨欄位不重複、刪除不回收；**下一個編號：#17**（新增項目後記得遞增此數字）。
 - 💡／📥 階段**不需要**計畫文件，一行想法即可；進入 🚧 時才依既有規則建 `docs/plans/YYYY-MM-DD-<feature>.md`，並在項目細節回填連結。
 - 完成時照既有流程（計畫歸檔＋CHANGELOG），看板項目移到 ✅ 摺疊區、收成一行、前面加完成日期；細節看 CHANGELOG 與歸檔計畫，這裡只留索引。
 - 項目有任何**決策結論**（做／不做／擱置／方向調整）時，當下就回寫到項目細節（日期＋結論），`<summary>` 同步標註狀態——決策只留在對話紀錄等於沒記。
