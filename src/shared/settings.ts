@@ -34,6 +34,7 @@ export const DEFAULT_SETTINGS: Settings = {
   maxCharsPerPage: 10000,
   youtubeBatchSize: 40,
   assistantMaxChars: 50000,
+  assistantModels: {},
 };
 
 /**
@@ -49,6 +50,7 @@ export async function loadSettings(): Promise<Settings> {
     claude: { ...DEFAULT_SETTINGS.claude, ...saved.claude },
     openai: { ...DEFAULT_SETTINGS.openai, ...saved.openai },
     style: { ...DEFAULT_SETTINGS.style, ...saved.style },
+    assistantModels: { ...DEFAULT_SETTINGS.assistantModels, ...saved.assistantModels },
   };
 }
 

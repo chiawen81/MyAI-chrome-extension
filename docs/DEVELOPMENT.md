@@ -68,7 +68,7 @@
 功能若立足於外部服務的未公開結構（claude.ai 的 DOM／URL 參數、YouTube 頁面結構），實作前先做 Task 0 式 spike：結論回填計畫文件的 Spec，原始腳本與執行紀錄收計畫附錄（供改版時重跑比對）。既有紀錄：
 
 - claude.ai 注入行為（輸入框／送出鈕／`?q=`／未登入）：[plans/archive/2026-07-10-context-menu-claude-actions.md](plans/archive/2026-07-10-context-menu-claude-actions.md) 附錄
-- claude.ai 模型切換（`?model=` slug／DOM 選單結構／**持久性語意**）：[plans/2026-07-11-assistant-model-select.md](plans/2026-07-11-assistant-model-select.md) §2.1＋附錄
+- claude.ai 模型切換（`?model=` slug／DOM 選單結構／**持久性語意**）：[plans/archive/2026-07-11-assistant-model-select.md](plans/archive/2026-07-11-assistant-model-select.md) §2.1＋附錄（含驗收後修正：claude.ai 以上次使用模型為新對話預設）
 
 ### 自動化執行（2026-07-11 由 #6 spike 建立的做法）
 

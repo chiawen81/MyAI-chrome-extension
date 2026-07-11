@@ -40,7 +40,8 @@ Node 20+ 的 `globalThis.crypto.subtle` 可直接跑，不需 mock。`cacheGetMa
 | `isMostlyChinese` | 純英文 → false；純中文 → true；中英混合恰在 50% 邊界；空字串／純空白 → false；空白字元不計入分母 |
 | `truncateForHandoff` | 未超限原樣回傳；超限保留開頭＋文末截斷註記；恰等於上限不截 |
 | `buildHandoffText` | 變數代入（content／page_url／page_title／target_lang_label）；content 超過 maxChars 被截斷但模板尾巴（如「我的問題：」）保留；maxChars 低於下限 500 時以 500 計 |
-| `buildFallbackUrl` | 輸出 `https://claude.ai/new?q=` 前綴；內容經 encodeURIComponent（換行 → `%0A`）；超過 2,000 字元備援上限再截 |
+| `buildFallbackUrl` | 輸出 `https://claude.ai/new?q=` 前綴；內容經 encodeURIComponent（換行 → `%0A`）；超過 2,000 字元備援上限再截；`model` 有值時附加 `&model=<slug>`、空字串／未傳不附加 |
+| `buildNewChatUrl` | 空字串 → `https://claude.ai/new`（不帶參數）；有 slug → `?model=<slug>`；slug 經 encodeURIComponent |
 | `validateAssistantTemplate` | 缺 `{{content}}` → 錯誤訊息；超過 500 字元 → 錯誤訊息；合法 → null |
 
 另：`extractPageContent`（`src/content/page-extract.ts`，需 DOM 環境）——語意容器命中（article ≥ 500 字）；容器內排除 nav/aside/推薦連結；過濾後過短退回容器全文；無語意容器時共同祖先啟發式；全空時 body.innerText 回退。注意 jsdom/happy-dom 的 `innerText`／`checkVisibility` 支援不全需 stub；且函式必須維持自包含（測試可順便驗 `toString()` 不含 import 引用）。
@@ -116,6 +117,7 @@ Node 20+ 的 `globalThis.crypto.subtle` 可直接跑，不需 mock。`cacheGetMa
 - [ ] 目標語言切換（如改日文）後「摘要此頁／摘要選取文字」指示句對應更新；翻譯類仍固定正體中文（預設模板）
 - [ ] 自訂模板：修改模板後右鍵動作反映自訂內容；「還原預設」／清空後回到預設；缺 `{{content}}` 或超過 500 字元 → alert 擋下不寫入
 - [ ] 換行、引號、emoji 內容填入後不亂碼、格式合理
-- [ ] 備援模擬：暫時把 claude-inject 的輸入框選擇器改壞 → 逾時後以 `?q=` 開頁（截斷版），不產生未捕捉錯誤
+- [ ] 交棒模型：動作卡選 Haiku 4.5 → 該動作開的分頁模型按鈕顯示 Haiku 4.5；兩個動作設不同模型 → 各自分頁模型正確、互不干擾；未設定的動作網址不帶 `?model=`
+- [ ] 備援模擬：暫時把 claude-inject 的輸入框選擇器改壞 → 逾時後以 `?q=` 開頁（截斷版），不產生未捕捉錯誤；有設定交棒模型時備援網址並帶 `model` 參數、與預填同時生效
 - [ ] 未登入 claude.ai 時觸發：導向登入頁、帶入內容不保留（已知限制）
 - [ ] 既有功能迴歸：整頁雙語翻譯、YouTube 字幕、popup、options 行為不變

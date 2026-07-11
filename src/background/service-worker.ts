@@ -20,6 +20,7 @@ import {
   ASSISTANT_AUTO_SUBMIT,
   buildFallbackUrl,
   buildHandoffText,
+  buildNewChatUrl,
   isMostlyChinese,
   type AssistantAction,
 } from '../shared/assistant-prompts';
@@ -379,9 +380,10 @@ function waitForTabComplete(tabId: number, timeoutMs: number): Promise<void> {
  * 把組好的文字交棒到 claude.ai：開新分頁 → 注入 claude-inject script →
  * ASSISTANT_FILL。注入失敗或找不到輸入框（claude.ai 可能已改版）時，
  * 同分頁改走 ?q= 備援（截斷至保守上限）。
+ * model 有值時網址帶 ?model=<slug>（只影響該分頁，claude.ai 忽略無效值時優雅降級）。
  */
-async function handoffToClaude(text: string, autoSubmit: boolean): Promise<void> {
-  const created = await chrome.tabs.create({ url: 'https://claude.ai/new' });
+async function handoffToClaude(text: string, autoSubmit: boolean, model: string): Promise<void> {
+  const created = await chrome.tabs.create({ url: buildNewChatUrl(model) });
   if (created.id === undefined) return;
   const tabId = created.id;
 
@@ -397,7 +399,7 @@ async function handoffToClaude(text: string, autoSubmit: boolean): Promise<void>
   } catch (err) {
     console.warn('[雙語翻譯] claude.ai 填入失敗，改走 ?q= 備援（claude.ai 可能已改版）', err);
     try {
-      await chrome.tabs.update(tabId, { url: buildFallbackUrl(text) });
+      await chrome.tabs.update(tabId, { url: buildFallbackUrl(text, model) });
     } catch {
       // 分頁可能已被使用者關閉，備援無處可去，靜默結束
     }
@@ -468,7 +470,7 @@ async function handleAssistantAction(
     settings.assistantMaxChars,
   );
 
-  await handoffToClaude(text, ASSISTANT_AUTO_SUBMIT[action]);
+  await handoffToClaude(text, ASSISTANT_AUTO_SUBMIT[action], settings.assistantModels[action] ?? '');
 }
 
 /* ------------------------------------------------------------------ */

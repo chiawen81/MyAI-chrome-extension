@@ -64,6 +64,24 @@ export const ASSISTANT_AUTO_SUBMIT: Record<AssistantAction, boolean> = {
   'translate-summarize': true,
 };
 
+/**
+ * 交棒模型清單（依動作各選；空 slug＝跟隨 claude.ai 目前選擇，URL 不帶參數）。
+ * ?model=<slug> 是 claude.ai 未公開行為：只影響該分頁；但 claude.ai 會以
+ * 「上次使用的模型」作為新對話預設，交棒送出後仍可能影響後續新對話（非本外掛可控）。
+ * 無效 slug 會原樣顯示在模型按鈕上，故不開放自由輸入。
+ * claude.ai 模型改朝換代時更新此常數即可（重驗步驟見計畫附錄）。
+ */
+export const ASSISTANT_MODELS = [
+  { slug: '', label: '跟隨 claude.ai 目前選擇（預設）' },
+  { slug: 'claude-haiku-4-5', label: 'Haiku 4.5（最快，適合摘要／翻譯）' },
+  { slug: 'claude-sonnet-5', label: 'Sonnet 5（日常均衡）' },
+  { slug: 'claude-opus-4-8', label: 'Opus 4.8（複雜任務）' },
+  { slug: 'claude-fable-5', label: 'Fable 5（最高階）' },
+] as const;
+
+/** 依動作各存一個交棒模型 slug；缺項或空字串＝跟隨 claude.ai 目前選擇 */
+export type AssistantModelOverrides = Partial<Record<AssistantAction, string>>;
+
 /** 單一自訂模板的長度上限（保護 sync 配額） */
 export const MAX_TEMPLATE_CHARS = 500;
 /** assistantMaxChars 設定的下限 */
@@ -116,10 +134,17 @@ export function buildHandoffText(template: string, vars: HandoffVars, maxChars: 
   });
 }
 
-/** 備援路徑：DOM 注入失敗時改以 ?q= 預填（另套保守長度上限再截一次） */
-export function buildFallbackUrl(text: string): string {
+/** 開新對話的網址：有指定模型時帶 ?model=<slug>（空字串＝不帶參數，行為與未指定相同） */
+export function buildNewChatUrl(model: string): string {
+  if (!model) return 'https://claude.ai/new';
+  return `https://claude.ai/new?model=${encodeURIComponent(model)}`;
+}
+
+/** 備援路徑：DOM 注入失敗時改以 ?q= 預填（另套保守長度上限再截一次）；model 有值時併帶 */
+export function buildFallbackUrl(text: string, model = ''): string {
   const truncated = truncateForHandoff(text, FALLBACK_QUERY_MAX_CHARS);
-  return `https://claude.ai/new?q=${encodeURIComponent(truncated)}`;
+  const modelParam = model ? `&model=${encodeURIComponent(model)}` : '';
+  return `https://claude.ai/new?q=${encodeURIComponent(truncated)}${modelParam}`;
 }
 
 /**

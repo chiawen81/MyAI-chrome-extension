@@ -6,6 +6,7 @@
 import {
   ASSISTANT_ACTIONS,
   ASSISTANT_ACTION_LABELS,
+  ASSISTANT_MODELS,
   DEFAULT_ASSISTANT_PROMPTS,
   MIN_ASSISTANT_MAX_CHARS,
   validateAssistantTemplate,
@@ -313,6 +314,29 @@ function setupAssistantTab(): void {
     const textarea = document.createElement('textarea');
     textarea.value = assistantPrompts[action];
 
+    // 交棒模型：依動作各選；空 slug＝跟隨 claude.ai 目前選擇（不寫入 settings，保持缺項）
+    const modelField = document.createElement('div');
+    modelField.className = 'field';
+    const modelLabel = document.createElement('label');
+    modelLabel.textContent = '交棒模型';
+    const modelSelect = document.createElement('select');
+    for (const { slug, label } of ASSISTANT_MODELS) {
+      const option = document.createElement('option');
+      option.value = slug;
+      option.textContent = label;
+      modelSelect.appendChild(option);
+    }
+    modelSelect.value = settings.assistantModels[action] ?? '';
+    modelSelect.addEventListener('change', () => {
+      if (modelSelect.value === '') {
+        delete settings.assistantModels[action];
+      } else {
+        settings.assistantModels[action] = modelSelect.value;
+      }
+      void persistSettings();
+    });
+    modelField.append(modelLabel, modelSelect);
+
     const actions = document.createElement('div');
     actions.className = 'expert-actions';
     const resetButton = document.createElement('button');
@@ -344,7 +368,7 @@ function setupAssistantTab(): void {
       void persistAssistantPrompts();
     });
 
-    card.append(header, textarea, actions);
+    card.append(header, textarea, modelField, actions);
     list.appendChild(card);
   }
 

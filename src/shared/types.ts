@@ -4,6 +4,8 @@
  * 讓 background / content script / popup / options 之間的通訊有一致的型別保障。
  */
 
+import type { AssistantModelOverrides } from './assistant-prompts';
+
 /** 支援的 AI 翻譯服務供應商 */
 export type ProviderId = 'claude' | 'openai';
 
@@ -62,6 +64,11 @@ export interface Settings {
    * （避免極端長頁面讓輸入框卡死；下限 500，見 shared/assistant-prompts.ts）
    */
   assistantMaxChars: number;
+  /**
+   * 右鍵選單 Claude 助手：依動作各選的交棒模型 slug
+   * （缺項或空字串＝跟隨 claude.ai 目前選擇；清單見 shared/assistant-prompts.ts 的 ASSISTANT_MODELS）
+   */
+  assistantModels: AssistantModelOverrides;
 }
 
 /* 跨 context 訊息協定定義於 shared/messages.ts，此處 re-export 維持既有 import 相容 */

@@ -35,17 +35,6 @@
 ## 📥 待辦（確定要做，尚未開工）
 
 <details>
-<summary>#6 [功能] Claude 助手：交棒時可指定 claude.ai 模型 — spike 待人工驗證</summary>
-
-- 動機：交棒後預設用 claude.ai 當下選的模型（常是最高階款），摘要／翻譯類任務用 Haiku 等輕量模型即可，避免浪費訂閱用量（2026-07-11 測試回饋）。
-- 構想：options「Claude 助手」分頁加模型選項，帶入時自動切換。
-- 前置：需 Task 0 式 spike 驗證切換方式（URL 參數或 DOM 操作模型選單，皆屬 claude.ai 未公開結構）。
-- 2026-07-11 spike 步驟已設計（暫存 `_temp/spike-6-model-select.md`，不進版控；結果回填計畫附錄後可刪）：順序「B：DOM 掃描切換（順帶挖模型內部 id）→ A：URL 參數」，並驗證**持久性**（切換是否改掉帳號後續新對話的預設模型，直接影響 Spec 對策）。
-- 下一步：使用者執行 spike 回報結果 → 建計畫文件（`docs/plans/`）審閱 → 通過後開工並移進行中。
-
-</details>
-
-<details>
 <summary>#9 [SDD] 建立程式碼最佳實踐準則</summary>
 
 - 動機：程式碼量漸增，需要基本準則避免日後疊床架屋（2026-07-11）。
@@ -87,13 +76,14 @@
 
 ## 🚧 進行中
 
-_（空）_
+（目前無進行中項目）
 
 
 <br><br>
 <details>
 <summary>✅ 已完成（點擊展開）</summary>
 
+- 2026-07-11 #6 [功能] Claude 助手：交棒時依動作指定 claude.ai 模型（URL 參數 `?model=`）— [plans/archive/2026-07-11-assistant-model-select.md](plans/archive/2026-07-11-assistant-model-select.md)
 - 2026-07-11 #3 [功能] 右鍵選單 Claude 助手（五動作交棒 claude.ai）— [plans/archive/2026-07-10-context-menu-claude-actions.md](plans/archive/2026-07-10-context-menu-claude-actions.md)
 - 2026-07-11 #7 [功能] Claude 助手：新增「請 Claude 摘要選取文字」動作 — 併入 #3 計畫（見其 §2.8-bis）
 - 2026-07-11 #10 [SDD] 調整任務執行節奏：連續執行、收尾前才停下驗收（特例於計畫階段標註停點）— 已落地 CLAUDE.md 與 DEVELOPMENT.md

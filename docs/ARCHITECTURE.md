@@ -60,7 +60,7 @@
 
 | key | 型別 | 內容 |
 |---|---|---|
-| `settings` | `Settings`（`shared/types.ts`） | 供應商選擇、兩組 API key＋模型、目標語言、專家 id、樣式、並發數、字數上限、YouTube 批次大小、Claude 助手帶入字數上限（`assistantMaxChars`） |
+| `settings` | `Settings`（`shared/types.ts`） | 供應商選擇、兩組 API key＋模型、目標語言、專家 id、樣式、並發數、字數上限、YouTube 批次大小、Claude 助手帶入字數上限（`assistantMaxChars`）、依動作交棒模型（`assistantModels`：`Partial<Record<AssistantAction, string>>`，缺項＝跟隨 claude.ai；**巢狀物件，`loadSettings()` 深合併含此層 spread**） |
 | `customExperts` | `ExpertTemplate[]` | 自訂 AI 專家。**與 settings 分開存**就是為了避開單項 8KB 上限；prompt 過長仍會存檔失敗（options 已有 alert 提示） |
 | `assistantPrompts` | `Partial<Record<AssistantAction, string>>` | Claude 助手模板的**覆寫**（只存與預設不同的動作；沿用 customExperts 獨立 key 先例避開 8KB 上限）。讀取一律走 `loadAssistantPrompts()`：與預設合併、空字串／缺項退回預設 |
 
