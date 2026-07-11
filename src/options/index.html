@@ -71,6 +71,7 @@
           <option value="dashed">虛線底線</option>
           <option value="marker">馬克筆（背景高亮）</option>
           <option value="quote">引用（左側豎線＋縮排）</option>
+          <option value="bold">粗體</option>
         </select>
       </div>
 
@@ -89,8 +90,18 @@
           <input type="number" id="style-size" min="50" max="200" step="5" />
         </div>
         <div class="field">
-          <label for="style-font">字型</label>
-          <input type="text" id="style-font" placeholder='例如 "Noto Sans TC", sans-serif' />
+          <label for="style-font">字型（可自訂輸入）</label>
+          <input type="text" id="style-font" list="style-font-options" placeholder="留空 = 不覆寫" />
+          <datalist id="style-font-options">
+            <option value='"Noto Sans TC", sans-serif'></option>
+            <option value='"Microsoft JhengHei", sans-serif'></option>
+            <option value='"PingFang TC", sans-serif'></option>
+            <option value="system-ui, sans-serif"></option>
+            <option value="Arial, sans-serif"></option>
+            <option value="Georgia, serif"></option>
+            <option value='"Times New Roman", serif'></option>
+            <option value="monospace"></option>
+          </datalist>
         </div>
       </fieldset>
 

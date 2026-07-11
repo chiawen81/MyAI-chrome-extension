@@ -18,7 +18,7 @@ export interface ProviderSettings {
 }
 
 /** 譯文樣式預設集的識別碼 */
-export type StylePresetId = 'none' | 'dashed' | 'marker' | 'quote';
+export type StylePresetId = 'none' | 'dashed' | 'marker' | 'quote' | 'bold';
 
 /** 譯文外觀設定（網頁譯文與 YouTube 字幕共用） */
 export interface StyleSettings {

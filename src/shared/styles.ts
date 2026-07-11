@@ -33,6 +33,10 @@ const PRESET_RULES: Record<StyleSettings['preset'], string> = {
     padding-left: 0.6em !important;
     opacity: 0.85 !important;
   `,
+  // 粗體
+  bold: `
+    font-weight: 700 !important;
+  `,
 };
 
 /**

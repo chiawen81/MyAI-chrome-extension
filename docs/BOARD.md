@@ -42,14 +42,6 @@
 </details>
 
 <details>
-<summary>#12 [功能] 樣式設定：預設樣式加「粗體」＋字型欄位提供選項</summary>
-
-- 動機：2026-07-11 使用回饋。
-- 範圍：(a)「預設樣式」下拉加「粗體」預設集（依 DEVELOPMENT.md 新增樣式預設集步驟）；(b)「字型」由自由填寫改為提供常用選項（下拉或 datalist，保留自訂輸入）。
-
-</details>
-
-<details>
 <summary>#4 [優化] 導入 vitest 單元測試</summary>
 
 - 範圍與優先序見 docs/TESTING.md 第 1 節。
@@ -74,6 +66,7 @@
 <details>
 <summary>✅ 已完成（點擊展開）</summary>
 
+- 2026-07-11 #12 [功能] 樣式設定：預設樣式加「粗體」＋字型欄位提供選項 — [plans/archive/2026-07-11-style-bold-preset-font-options.md](plans/archive/2026-07-11-style-bold-preset-font-options.md)
 - 2026-07-11 #16 [SDD] SDD-GUIDE.md 場景分派流程圖加註指令鏈＋第 7 節納入 /pim-note、/meta-learning 兩個使用者層級 skill — 詳見 CHANGELOG
 - 2026-07-11 #15 [SDD] 新增並優化 `/commit-session` skill（只 commit 當前視窗異動＋收尾回報 token 費用） — 詳見 CHANGELOG
 - 2026-07-11 #6 [功能] Claude 助手：交棒時依動作指定 claude.ai 模型（URL 參數 `?model=`）— [plans/archive/2026-07-11-assistant-model-select.md](plans/archive/2026-07-11-assistant-model-select.md)
