@@ -176,10 +176,37 @@ function setupServiceTab(): void {
 /* 分頁二：樣式                                                         */
 /* ------------------------------------------------------------------ */
 
+/**
+ * 將任意 CSS 顏色字串（hex 3/6 碼、具名色、rgb()/rgba() 等）解析成
+ * <input type="color"> 可用的 6 碼小寫 hex；無法解析則回傳 null，
+ * 呼叫端應保留色盤原值不動。
+ */
+function cssColorToHex(value: string): string | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+
+  const probe = document.createElement('div');
+  probe.style.color = '';
+  probe.style.color = trimmed;
+  if (!probe.style.color) return null; // 瀏覽器拒絕了這個值
+
+  document.body.appendChild(probe);
+  const rgb = getComputedStyle(probe).color; // "rgb(r, g, b)" 或 "rgba(r, g, b, a)"
+  probe.remove();
+
+  const channels = rgb.match(/[\d.]+/g);
+  if (!channels || channels.length < 3) return null;
+
+  const [r, g, b] = channels.map((n) => Math.round(Number(n)));
+  return '#' + [r, g, b].map((n) => n.toString(16).padStart(2, '0')).join('');
+}
+
 function setupStyleTab(): void {
   const preset = $<HTMLSelectElement>('#style-preset');
   const color = $<HTMLInputElement>('#style-color');
+  const colorPicker = $<HTMLInputElement>('#style-color-picker');
   const background = $<HTMLInputElement>('#style-bg');
+  const backgroundPicker = $<HTMLInputElement>('#style-bg-picker');
   const size = $<HTMLInputElement>('#style-size');
   const font = $<HTMLInputElement>('#style-font');
 
@@ -188,6 +215,15 @@ function setupStyleTab(): void {
   background.value = settings.style.backgroundColor;
   size.value = String(settings.style.fontSizePercent);
   font.value = settings.style.fontFamily;
+
+  // 色盤僅是文字欄位的視覺輔助，初始化時單向從文字欄位解析，
+  // 解析失敗就維持瀏覽器預設值，不回頭覆寫文字欄位。
+  const syncPickerFromText = (textInput: HTMLInputElement, picker: HTMLInputElement): void => {
+    const hex = cssColorToHex(textInput.value);
+    if (hex) picker.value = hex;
+  };
+  syncPickerFromText(color, colorPicker);
+  syncPickerFromText(background, backgroundPicker);
 
   // 預覽用的 <style>：與 content script 使用同一套 CSS 產生邏輯，所見即所得
   const previewStyle = document.createElement('style');
@@ -215,6 +251,20 @@ function setupStyleTab(): void {
     input.addEventListener('change', apply);
     input.addEventListener('input', apply);
   }
+
+  // 文字欄位變更時，順帶同步色盤色塊（不覆寫文字欄位本身）
+  color.addEventListener('input', () => syncPickerFromText(color, colorPicker));
+  background.addEventListener('input', () => syncPickerFromText(background, backgroundPicker));
+
+  // 色盤選色時回填 hex 到文字欄位，並套用既有流程
+  colorPicker.addEventListener('input', () => {
+    color.value = colorPicker.value;
+    apply();
+  });
+  backgroundPicker.addEventListener('input', () => {
+    background.value = backgroundPicker.value;
+    apply();
+  });
 }
 
 /* ------------------------------------------------------------------ */

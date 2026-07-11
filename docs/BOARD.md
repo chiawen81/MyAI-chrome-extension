@@ -34,14 +34,6 @@
 </details>
 
 <details>
-<summary>#11 [功能] 樣式設定：自訂顏色改用色盤選色＋即時預覽</summary>
-
-- 動機：目前自訂文字色／背景色要手輸色票，看不到顏色（2026-07-11）。
-- 構想：色票輸入框旁顯示顏色預覽，或直接改用 `<input type="color">` 點開色盤選色、選完即時回填色票值（兩者可並存：color input＋文字欄位雙向同步）。
-
-</details>
-
-<details>
 <summary>#4 [優化] 導入 vitest 單元測試</summary>
 
 - 範圍與優先序見 docs/TESTING.md 第 1 節。
@@ -61,11 +53,11 @@
 
 （目前無進行中項目）
 
-
 <br><br>
 <details>
 <summary>✅ 已完成（點擊展開）</summary>
 
+- 2026-07-11 #11 [功能] 樣式設定：自訂顏色改用色盤選色＋即時預覽 — [plans/archive/2026-07-11-style-color-picker.md](plans/archive/2026-07-11-style-color-picker.md)
 - 2026-07-11 #12 [功能] 樣式設定：預設樣式加「粗體」＋字型欄位提供選項 — [plans/archive/2026-07-11-style-bold-preset-font-options.md](plans/archive/2026-07-11-style-bold-preset-font-options.md)
 - 2026-07-11 #16 [SDD] SDD-GUIDE.md 場景分派流程圖加註指令鏈＋第 7 節納入 /pim-note、/meta-learning 兩個使用者層級 skill — 詳見 CHANGELOG
 - 2026-07-11 #15 [SDD] 新增並優化 `/commit-session` skill（只 commit 當前視窗異動＋收尾回報 token 費用） — 詳見 CHANGELOG

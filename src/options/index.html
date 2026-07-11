@@ -79,11 +79,17 @@
         <legend>進階自訂（留空代表沿用原文）</legend>
         <div class="field">
           <label for="style-color">文字顏色（如 #1a73e8 或 royalblue）</label>
-          <input type="text" id="style-color" placeholder="留空 = 不覆寫" />
+          <div class="color-field-row">
+            <input type="text" id="style-color" placeholder="留空 = 不覆寫" />
+            <input type="color" id="style-color-picker" class="color-swatch" aria-label="文字顏色色盤" />
+          </div>
         </div>
         <div class="field">
           <label for="style-bg">背景顏色</label>
-          <input type="text" id="style-bg" placeholder="留空 = 不覆寫" />
+          <div class="color-field-row">
+            <input type="text" id="style-bg" placeholder="留空 = 不覆寫" />
+            <input type="color" id="style-bg-picker" class="color-swatch" aria-label="背景顏色色盤" />
+          </div>
         </div>
         <div class="field">
           <label for="style-size">字體大小（%）</label>
