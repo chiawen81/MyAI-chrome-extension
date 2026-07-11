@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## 2026-07-11
+- docs/SDD-GUIDE.md 第 7 節納入兩個**使用者層級** skill 的用法（新增 7.2／7.3 小節與自動化評估表格列，並補「專案層級 vs 使用者層級 skill」說明）：`/pim-note`（把對話知識分主題做成 PIM 卡片寫入 Notion，經 claude.ai Notion 連接器；可帶範圍參數限定主題）、`/meta-learning`（任務後四段式學習回顧，只輸出不寫 Notion，可串接 /pim-note）。skill 定義檔在 `C:\Users\Wen\.claude\skills\`，不隨本 repo 版控。同時更新第 0 節場景分派總覽流程圖：各場景加註對應指令（/sdd-plan、/sdd-fix 等），新增「驗收後收尾」（/sdd-done → /commit-session）與「隨時可用」（/meta-learning → /pim-note）兩段指令鏈；第 7 節表格補標 /sdd-plan、/sdd-fix、/sdd-done 為已建置（`.claude/commands/` 檔案實際存在）
 - `/commit-session` skill 增補步驟 6：commit 後統計本視窗 token 用量並換算 Claude API 等值費用（新增 `count-session-tokens.py`，讀 session 逐字稿依 requestId 去重、按模型分組計價；定價表寫死於腳本）；同視窗多次 commit 時以 scratchpad 標記檔分段，回報「本段（自上次成功 commit 後）」與「視窗累計」兩組數字，步驟 1 同步加註「已成功 commit 過即只盤點其後異動」避免重跑空 diff；步驟 2 改為一次 `git diff` 帶入全部檔案再逐檔判讀（原逐檔各跑一次，每輪工具呼叫都重讀整個對話 context，N 檔 N 輪是主要 token 浪費點）；`/commit-session` 用法納入 docs/SDD-GUIDE.md 第 7 節（新增 7.1 小節與自動化評估表格列）
 - 新增專案 skill `/commit-session`（`.claude/skills/commit-session/SKILL.md`）：只 commit 當前視窗（對話）異動的檔案；同一檔案被多視窗編輯時，以「HEAD 版重套自己的修改 → hash-object 寫進 index」選擇性 staging，不夾帶其他視窗未收尾的修改。看板同日新增 #14（用 Claude Design 優化 UI/UX）
 - 完成看板 #6 前置 spike（claude.ai 模型切換可行性）並定案機制：URL 參數 `?model=<slug>` 有效、每分頁獨立、**不污染帳號預設模型**、可與 `?q=` 併用；DOM 操作選單雖可行但會永久改掉帳號預設（伺服器端）故不採。計畫文件 `2026-07-11-assistant-model-select.md` 建立（審閱通過：依動作各選模型），spike 原始紀錄收計畫附錄
