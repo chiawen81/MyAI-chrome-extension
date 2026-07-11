@@ -1,6 +1,7 @@
 ---
 name: commit-session
 description: 只 commit 當前視窗（本次對話）異動的檔案。當使用者說「/commit-session」「commit 這個視窗的異動」「到一個段落了幫我 commit」時使用。多視窗並行編輯同一檔案時，以 index 選擇性 staging 只收本對話的修改。
+model: sonnet
 ---
 
 # commit-session — 只 commit 本對話的異動
