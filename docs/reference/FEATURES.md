@@ -38,7 +38,8 @@
 **觸發**：watch 頁播放器工具列的「譯」按鈕 → 面板選來源字幕軌 → 開啟雙語字幕。
 
 **實際行為**：
-- 字幕軌取得（`subtitle-provider.ts`，隔離模組）：同源重新 fetch watch 頁 HTML → 括號配對掃描抽出 `ytInitialPlayerResponse` → 讀 `captionTracks`；字幕內容優先 json3 格式，失敗退回 XML timedtext。
+- 字幕軌取得（`subtitle-provider.ts`，隔離模組）：同源重新 fetch watch 頁 HTML → 括號配對掃描抽出 `ytInitialPlayerResponse` → 讀 `captionTracks`。
+- 字幕內容取得（2026-07-13 修復 #18）：依序嘗試 `fmt=json3` → `fmt=srv3` → 預設 XML（baseUrl 帶 `variant` 參數時另以去除 variant 的 URL 重試一輪）；全部回空時走 InnerTube 備援（`youtubei/v1/player`，ANDROID client）重新取得**不需 pot token** 的 baseUrl 再試一輪——YouTube 對 timedtext 要求 pot、缺了會回 200 空 body 而非 4xx，watch 頁 HTML 內的 baseUrl 無 pot。失敗時錯誤有分類：空內容（「字幕來源回傳空內容…」）／非預期內容／格式解析失敗（「可能已改版」）。
 - 面板預設選第一條人工字幕（沒有才選自動產生）。
 - 整批預翻譯：依批次大小（預設 40 句，下限 5）循序送翻，每批附前一批最後 2 句原文作 context；進度條逐批更新，字幕層譯文漸進補上（未翻到的句子只顯示原文）。
 - 字幕呈現：自繪 overlay（原文白色在上、譯文在下），隱藏原生字幕；`timeupdate`/`seeking` + 二分搜尋切換當前句；字級隨播放器高度縮放（全螢幕自動變大），樣式沿用功能一的設定並即時反映。
@@ -46,7 +47,8 @@
 - 換片偵測：`yt-navigate-finish` 事件 + 每秒輪詢 URL 雙保險；換片即銷毀 overlay、取消進行中的翻譯（cancelled 旗標 + runToken 檢查點）、重置面板。
 
 **已知限制**：
-- `subtitle-provider.ts` 依賴 YouTube 未公開的頁面結構，改版即失效（錯誤訊息會註明「YouTube 可能已改版」）；修補範圍已隔離在該檔案。
+- `subtitle-provider.ts` 依賴 YouTube 未公開的頁面結構，改版即失效（錯誤訊息會註明「YouTube 可能已改版」）；修補範圍已隔離在該檔案。InnerTube 備援（ANDROID client）屬 yt-dlp 式的軍備競賽路徑，失效週期不可控，重修時先跑計畫附錄的最小重現（`plans/archive/2026-07-13-修復-YouTube字幕空回應誤判為格式錯誤.md`）。
+- 首批翻譯完成前字幕層只顯示原文（批次大、模型慢時等待明顯，優化列看板 #20）；換片後面板字幕軌清單未自動刷新（既有 bug，列看板 #19）。
 - 整批預翻譯完成前關閉字幕再重開，會從快取／重新翻譯開始，不接續先前進度（單段快取使 API 費用不重複）。
 - 部分翻譯後換片，未完成的譯文不寫入整部影片快取（但逐句快取仍有效）。
 - 字幕重疊的軌道（同一時間多句）只顯示二分搜尋命中的一句。

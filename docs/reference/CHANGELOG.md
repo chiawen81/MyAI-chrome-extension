@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2026-07-13
+- 完成看板 #18「YouTube 雙語字幕：timedtext 回 200 空 body 被誤判為格式無法解析」（僅動 `subtitle-provider.ts`）：①空回應／非預期內容前置檢查，錯誤訊息依失敗型態分類（原本空字串直接進 JSON.parse／DOMParser，拋出誤導的「YouTube 可能已改版」）②格式 fallback 鏈 `fmt=json3`→`fmt=srv3`→預設 XML→去 `variant` 參數重試（XML 解析器順帶支援 srv3 `<p t d>` 變體）③InnerTube 備援——spike 實錘根因為 YouTube 對 timedtext 要求 pot（proof-of-origin）token、缺 pot 回 200 空 body，而 ANDROID client 經 `youtubei/v1/player` 取得的 baseUrl 不需 pot（`?key=` 可省略；baseUrl 已含 fmt 需用 URL API 設定），原始 baseUrl 全空時自動走此路徑重試（`CaptionTrack` 增 `videoId` 欄位）。不需 main-world 注入、不改 manifest。spike 以 Playwright CDP＋拋棄式 profile 全自動完成（四輪，紀錄收計畫附錄含最小重現）。手動驗收通過（三部影片）。計畫文件 `2026-07-13-修復-YouTube字幕空回應誤判為格式錯誤.md` 歸檔。驗收中另回報既有問題入看板：#19 換片後面板字幕軌清單未刷新、#20 首批翻譯等待過久
+- SDD 流程新增計畫文件格式規範（docs/plans/ 下所有計畫文件適用，含 Fix 計畫）：段落標題用 🔸／子標題用 🔹、🔸 標題前插 `<br><br>` 拉開區塊間距（Markdown 預覽會折疊純空行，只空行看不出間距；子標題前與段落間不插）、使用者操作動線與程式碼解說用程式碼區塊、過細內容用 `<details>` 收納（摘要留外層）。同步更新 CLAUDE.md 關鍵規則、`/sdd-plan` 指令、SDD操作指南範本 1-A／2-A／4-A
+
 ## 2026-07-11
 - 完成看板 #11「樣式設定：自訂顏色改用色盤選色＋即時預覽」：options「樣式」分頁文字色／背景色文字欄位旁新增 `<input type="color">` 色盤（`index.html`），與文字欄位雙向同步（`options.ts`）——新增 `cssColorToHex()` 用暫存 DOM 元素解析任意 CSS 顏色字串（hex 3/6 碼、具名色、`rgb()`/`rgba()`）為 6 碼 hex；色盤選色會覆寫回文字欄位並觸發既有存檔流程，文字欄位手動輸入合法顏色只同步色盤色塊、不覆寫文字欄位原值（保留具名色與透明度資訊），無法解析時色盤維持前一個有效值。首次套用時因 `.field input { width: 100% }` 特異性高於新增的 `.color-swatch`，色盤被撐成滿版，改用更高特異性選擇器（`.field .color-field-row input[type='color'].color-swatch`）修正。`StyleSettings` 資料結構不變。手動驗收通過。計畫文件 `2026-07-11-style-color-picker.md` 歸檔
 - 完成看板 #12「樣式設定：預設樣式加「粗體」＋字型欄位提供選項」：`StylePresetId` 新增 `bold`（`shared/types.ts`）、`PRESET_RULES` 補對應 CSS 宣告 `font-weight: 700 !important`（`shared/styles.ts`）、options「樣式」分頁「預設樣式」下拉新增「粗體」選項；「字型」欄位改為 `<input list>` + `<datalist>`（8 種中英文常見字型），維持自由輸入不受限、不影響既有已儲存的自訂字型值、`options.ts` 讀寫邏輯不需變動。手動驗收通過。計畫文件 `2026-07-11-style-bold-preset-font-options.md` 歸檔
