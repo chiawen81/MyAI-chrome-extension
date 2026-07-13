@@ -24,7 +24,12 @@
 - 任務想法（功能發想／bug／優化／SDD 調整）記錄於 docs/任務看板.md；
   使用者提到新想法或回報 bug 時先上看板，不急著開計畫文件
 - 功能開發前先在 docs/plans/ 建立計畫（YYYY-MM-DD-<中文描述>.md，
-  結構：User Story → Spec → Tasks）；完成後移至 docs/plans/archive/
+  結構：User Story → Spec → Tasks）；docs/plans/ 下所有計畫文件（含 Fix 計畫）
+  一律遵守格式：段落標題用 🔸、子標題用 🔹，每個 🔸 標題前插一行 `<br><br>`
+  拉開區塊間距（Markdown 預覽會折疊純空行，只空行看不出間距；🔹 子標題前
+  與一般段落之間不插，段落間空一行即可），
+  涉及使用者操作動線或程式碼的解說用程式碼區塊，
+  過於細節的資訊用 <details> 摺疊收納（摘要留在外層）；完成後移至 docs/plans/archive/
   並更新 docs/reference/CHANGELOG.md；開工時同步把 docs/任務看板.md 對應項目
   移到「進行中」並連結計畫文件
 - git commit 訊息一律遵守 docs/reference/COMMIT-CONVENTION.md（type(中文scope) 前綴＋數字列點 body；
