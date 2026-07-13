@@ -45,10 +45,16 @@ let panel: HTMLDivElement | null = null;
 init();
 
 function init(): void {
-  // 進入 watch 頁（或換片）時重建狀態；離開 watch 頁時清理
+  // 進入 watch 頁（或換片）時重建狀態；離開 watch 頁時清理並收合面板
   watchNavigation((videoId) => {
     teardownSession();
-    if (videoId) setupForVideo(videoId);
+    if (videoId) {
+      setupForVideo(videoId);
+      // 面板重置須在新 session 建立後，populateTracks() 才拿得到新影片
+      updatePanelForNewVideo();
+    } else if (panel) {
+      panel.style.display = 'none';
+    }
   });
 
   const initialVideoId = getCurrentVideoId();
@@ -60,13 +66,12 @@ function init(): void {
   });
 }
 
-/** 清掉舊影片的一切：字幕層、面板狀態、進行中的翻譯 */
+/** 清掉舊影片的一切：字幕層、進行中的翻譯（面板重置由呼叫端在新 session 建立後處理） */
 function teardownSession(): void {
   if (!session) return;
   session.cancelled = true;
   session.overlay?.destroy();
   session = null;
-  updatePanelForNewVideo();
 }
 
 function setupForVideo(videoId: string): void {

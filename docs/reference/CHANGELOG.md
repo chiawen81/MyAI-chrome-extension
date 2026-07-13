@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 2026-07-14
+- 完成看板 #19「YouTube 面板：換片後不會收合，字幕軌下拉變成空清單」（小修，僅動 `src/content/youtube/index.ts`）：根因為換片時 `teardownSession()` 先把 `session` 設為 null 才呼叫 `updatePanelForNewVideo()`，面板開著時觸發的 `populateTracks()` 因 session 為 null 提前 return，清單清空後不再回填、新 session 建立後也無面板刷新。修正為換片時在 `setupForVideo()` 建立新 session 後才執行「重置面板＋回填清單」；離開 watch 頁（無新影片）時直接收合面板
+
 ## 2026-07-13
 - 完成看板 #18「YouTube 雙語字幕：timedtext 回 200 空 body 被誤判為格式無法解析」（僅動 `subtitle-provider.ts`）：①空回應／非預期內容前置檢查，錯誤訊息依失敗型態分類（原本空字串直接進 JSON.parse／DOMParser，拋出誤導的「YouTube 可能已改版」）②格式 fallback 鏈 `fmt=json3`→`fmt=srv3`→預設 XML→去 `variant` 參數重試（XML 解析器順帶支援 srv3 `<p t d>` 變體）③InnerTube 備援——spike 實錘根因為 YouTube 對 timedtext 要求 pot（proof-of-origin）token、缺 pot 回 200 空 body，而 ANDROID client 經 `youtubei/v1/player` 取得的 baseUrl 不需 pot（`?key=` 可省略；baseUrl 已含 fmt 需用 URL API 設定），原始 baseUrl 全空時自動走此路徑重試（`CaptionTrack` 增 `videoId` 欄位）。不需 main-world 注入、不改 manifest。spike 以 Playwright CDP＋拋棄式 profile 全自動完成（四輪，紀錄收計畫附錄含最小重現）。手動驗收通過（三部影片）。計畫文件 `2026-07-13-修復-YouTube字幕空回應誤判為格式錯誤.md` 歸檔。驗收中另回報既有問題入看板：#19 換片後面板字幕軌清單未刷新、#20 首批翻譯等待過久
 - SDD 流程新增計畫文件格式規範（docs/plans/ 下所有計畫文件適用，含 Fix 計畫）：段落標題用 🔸／子標題用 🔹、🔸 標題前插 `<br><br>` 拉開區塊間距（Markdown 預覽會折疊純空行，只空行看不出間距；子標題前與段落間不插）、使用者操作動線與程式碼解說用程式碼區塊、過細內容用 `<details>` 收納（摘要留外層）。同步更新 CLAUDE.md 關鍵規則、`/sdd-plan` 指令、SDD操作指南範本 1-A／2-A／4-A
