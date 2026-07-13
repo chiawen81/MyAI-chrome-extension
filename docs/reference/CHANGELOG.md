@@ -1,6 +1,7 @@
 # CHANGELOG
 
 ## 2026-07-14
+- SDD 流程修訂（依 #19 實例）：①場景三／四分界從「單檔＋不改變對外行為」改為「根因已定位＋單檔＋行為變化小（經使用者當場確認）→ 場景三；仍需診斷或 spike／跨多檔案／行為變更需明確驗收條件 → 場景四」——根因與修法已寫在看板條目時，再開計畫文件只是資訊重複（SDD操作指南.md 場景分派與 3-A／4 章節、`.claude/commands/sdd-fix.md` 同步修訂）②CLAUDE.md 關鍵規則新增：改動要交使用者測試／驗收前先跑 `npm run build`，只跑 typecheck 不算（#19 驗收曾因拿舊 build 撲空）
 - 完成看板 #19「YouTube 面板：換片後不會收合，字幕軌下拉變成空清單」（小修，僅動 `src/content/youtube/index.ts`）：根因為換片時 `teardownSession()` 先把 `session` 設為 null 才呼叫 `updatePanelForNewVideo()`，面板開著時觸發的 `populateTracks()` 因 session 為 null 提前 return，清單清空後不再回填、新 session 建立後也無面板刷新。修正為換片時在 `setupForVideo()` 建立新 session 後才執行「重置面板＋回填清單」；離開 watch 頁（無新影片）時直接收合面板
 
 ## 2026-07-13

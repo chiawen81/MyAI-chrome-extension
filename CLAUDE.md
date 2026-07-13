@@ -16,6 +16,8 @@
 - content script 內禁用框架與全域樣式污染，樣式一律走 scoped class
 - 四執行環境（content/service worker/popup/options）間通訊只透過
   chrome.runtime message，訊息型別集中定義於 shared/messages.ts
+- 凡改動後要交給我測試或驗收（含小修），先執行 `npm run build` 確保 dist/
+  是最新版，再提示我驗收——只跑 typecheck 不算（曾因此拿舊 build 驗收撲空）
 - 任務執行節奏：實作類 task 連續執行到底，做到「文件同步與收尾」task 前
   停下，提示我到 chrome://extensions 手動驗收，通過後才收尾；
   例外：若某 task 必須先由我驗收或回報結果才能往下做（如依賴外部頁面
