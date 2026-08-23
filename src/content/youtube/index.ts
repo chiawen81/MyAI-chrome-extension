@@ -3,7 +3,8 @@
  *
  * - 在播放器工具列注入「雙語字幕」按鈕，點擊開關控制面板
  * - 面板可選擇來源字幕語言、開啟／關閉雙語字幕、顯示翻譯進度
- * - 整批預翻譯：取得完整字幕後分批送翻（每批帶前一批最後 2 句作為上下文）
+ * - 整批預翻譯：取得完整字幕後分批並行送翻（首批縮小以求譯文快速出現，
+ *   每批帶前一批最後 2 句原文作為上下文）
  * - 譯文以「影片ID + 供應商 + 模型 + 專家 + 目標語言 + 字幕軌」為 key 快取
  * - 監聽 SPA 換片：清除字幕層與狀態，避免舊字幕殘留（驗收重點）
  */
@@ -323,9 +324,17 @@ async function startSubtitles(): Promise<void> {
   await translateAllCues(current, settings, cacheKey, myToken);
 }
 
+/** 首批句數：縮小首批，讓首句譯文能在單一小批往返內出現 */
+const FIRST_BATCH_SIZE = 10;
+
 /**
- * 整批預翻譯：依設定的批次大小切割字幕，逐批送翻並更新進度。
- * 每批附上前一批最後 2 句原文作為 context；批次採循序執行以維持上下文鏈。
+ * 整批預翻譯：首批縮小且「單獨先送」——與大批並行會被供應商端限流
+ * 拖慢，讓首批獨占容量才能保證首句譯文最快出現；首批完成渲染後，
+ * 其餘批次才進並發池同時送翻，各批回應到達即渲染（亂序漸進）。
+ * 每批的 context 是前一批最後 2 句「原文」，下載字幕時已全部備齊，
+ * 批次間無資料依賴，可安全並行；並發上限沿用 settings.concurrency，
+ * 與 background 的 semaphore 同一設定值。
+ * 任一批失敗即停止派發新批；已完成的譯文保留在畫面上，整包快取不寫入。
  */
 async function translateAllCues(
   current: VideoSession,
@@ -335,25 +344,35 @@ async function translateAllCues(
 ): Promise<void> {
   const batchSize = Math.max(5, settings.youtubeBatchSize);
   const total = current.cues.length;
+
+  // 切批：首批縮小，每批預先算好 offset 與 context
+  const batches: Array<{ offset: number; cues: SubtitleCue[]; context?: string[] }> = [];
+  for (let offset = 0; offset < total; ) {
+    const size = offset === 0 ? Math.min(FIRST_BATCH_SIZE, batchSize) : batchSize;
+    batches.push({
+      offset,
+      cues: current.cues.slice(offset, offset + size),
+      context:
+        offset > 0
+          ? current.cues.slice(Math.max(0, offset - 2), offset).map((cue) => cue.text)
+          : undefined,
+    });
+    offset += size;
+  }
+
   setProgress(0);
+  setStatus(`翻譯中… 0 / ${total} 句`);
 
-  for (let offset = 0; offset < total; offset += batchSize) {
-    if (current.cancelled || current.runToken !== myToken) return;
+  let doneCount = 0;
+  let firstError: string | null = null;
 
-    const batchCues = current.cues.slice(offset, offset + batchSize);
-    const context =
-      offset > 0
-        ? current.cues.slice(Math.max(0, offset - 2), offset).map((cue) => cue.text)
-        : undefined;
-
-    setStatus(`翻譯中… ${Math.min(offset + batchSize, total)} / ${total} 句`);
-
+  const runBatch = async (batch: (typeof batches)[number]): Promise<void> => {
     let response: TranslateBatchResponse;
     try {
       response = await chrome.runtime.sendMessage({
         type: 'TRANSLATE_BATCH',
-        items: batchCues.map((cue) => cue.text),
-        context,
+        items: batch.cues.map((cue) => cue.text),
+        context: batch.context,
       });
     } catch (err) {
       response = { ok: false, error: err instanceof Error ? err.message : String(err) };
@@ -361,16 +380,41 @@ async function translateAllCues(
     if (current.cancelled || current.runToken !== myToken) return;
 
     if (!response.ok || !response.translations) {
-      setStatus(`翻譯失敗：${response.error ?? '未知錯誤'}`);
-      setProgress(null);
+      firstError ??= response.error ?? '未知錯誤';
       return;
     }
 
     response.translations.forEach((translation, i) => {
-      current.translations[offset + i] = translation;
+      current.translations[batch.offset + i] = translation;
     });
     current.overlay?.setData(current.cues, current.translations);
-    setProgress(Math.round(((offset + batchCues.length) / total) * 100));
+    doneCount += batch.cues.length;
+    setStatus(`翻譯中… ${doneCount} / ${total} 句`);
+    setProgress(Math.round((doneCount / total) * 100));
+  };
+
+  // 首批單獨先跑，完成（渲染）後其餘批次才開池
+  await runBatch(batches[0]);
+  if (current.cancelled || current.runToken !== myToken) return;
+
+  if (firstError === null && batches.length > 1) {
+    let nextIndex = 1;
+    const runWorker = async (): Promise<void> => {
+      while (nextIndex < batches.length && firstError === null) {
+        if (current.cancelled || current.runToken !== myToken) return;
+        await runBatch(batches[nextIndex++]);
+      }
+    };
+
+    const workerCount = Math.max(1, Math.min(settings.concurrency, batches.length - 1));
+    await Promise.all(Array.from({ length: workerCount }, () => runWorker()));
+    if (current.cancelled || current.runToken !== myToken) return;
+  }
+
+  if (firstError !== null) {
+    setStatus(`翻譯失敗：${firstError}`);
+    setProgress(null);
+    return;
   }
 
   // 5. 完成：整部影片的譯文寫入快取
