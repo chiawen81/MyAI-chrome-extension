@@ -35,9 +35,10 @@
 
 ## 功能二：YouTube 雙語字幕
 
-**觸發**：watch 頁播放器工具列的「譯」按鈕 → 面板選來源字幕軌 → 開啟雙語字幕。
+**觸發**：watch 頁播放器工具列的機器人圖示按鈕 → 面板選來源字幕軌 → 開啟雙語字幕。
 
 **實際行為**：
+- 播放器按鈕使用 `currentColor` 圓角線性機器人 SVG，固定 48px 按鈕容器與 28px 圖示並以 flex 置中，避免 YouTube 對 SVG 套用 padding 時溢位；hover 提升亮度、字幕準備中顯示呼吸動畫、啟用時顯示紅色狀態線，並同步維護 `aria-expanded`、`aria-pressed`、`aria-busy` 與狀態標籤。
 - 字幕軌取得（`subtitle-provider.ts`，隔離模組）：同源重新 fetch watch 頁 HTML → 括號配對掃描抽出 `ytInitialPlayerResponse` → 讀 `captionTracks`。
 - 字幕內容取得（2026-07-13 修復 #18）：依序嘗試 `fmt=json3` → `fmt=srv3` → 預設 XML（baseUrl 帶 `variant` 參數時另以去除 variant 的 URL 重試一輪）；全部回空時走 InnerTube 備援（`youtubei/v1/player`，ANDROID client）重新取得**不需 pot token** 的 baseUrl 再試一輪——YouTube 對 timedtext 要求 pot、缺了會回 200 空 body 而非 4xx，watch 頁 HTML 內的 baseUrl 無 pot。失敗時錯誤有分類：空內容（「字幕來源回傳空內容…」）／非預期內容／格式解析失敗（「可能已改版」）。
 - 面板預設選第一條人工字幕（沒有才選自動產生）。

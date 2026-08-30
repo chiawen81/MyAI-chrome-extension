@@ -39,6 +39,25 @@ interface VideoSession {
 let session: VideoSession | null = null;
 let panel: HTMLDivElement | null = null;
 
+type YouTubeButtonState = 'inactive' | 'loading' | 'active';
+
+const YOUTUBE_BUTTON_STYLE_ID = 'bt-yt-button-style';
+
+const YOUTUBE_BUTTON_ICON = `
+  <svg class="bt-yt-button__icon" viewBox="0 0 36 36" aria-hidden="true">
+    <g fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path class="bt-yt-button__signal" d="M18 10V7" />
+      <rect x="8" y="11" width="20" height="17" rx="4" />
+      <path d="M8 16H6.5A1.5 1.5 0 0 0 5 17.5v4A1.5 1.5 0 0 0 6.5 23H8M28 16h1.5a1.5 1.5 0 0 1 1.5 1.5v4a1.5 1.5 0 0 1-1.5 1.5H28M14 23h8" />
+    </g>
+    <g fill="currentColor">
+      <circle class="bt-yt-button__signal" cx="18" cy="5" r="2" />
+      <circle cx="14" cy="18" r="1.6" />
+      <circle cx="22" cy="18" r="1.6" />
+    </g>
+  </svg>
+`;
+
 /* ------------------------------------------------------------------ */
 /* 初始化                                                               */
 /* ------------------------------------------------------------------ */
@@ -55,6 +74,7 @@ function init(): void {
       updatePanelForNewVideo();
     } else if (panel) {
       panel.style.display = 'none';
+      setPanelExpanded(false);
     }
   });
 
@@ -73,6 +93,7 @@ function teardownSession(): void {
   session.cancelled = true;
   session.overlay?.destroy();
   session = null;
+  setYouTubeButtonState('inactive');
 }
 
 function setupForVideo(videoId: string): void {
@@ -108,19 +129,128 @@ async function injectButtonWhenReady(): Promise<void> {
 }
 
 function createButton(): HTMLButtonElement {
+  ensureYouTubeButtonStyles();
   const button = document.createElement('button');
   button.className = 'ytp-button bt-yt-button';
   button.title = '雙語字幕';
-  button.textContent = '譯';
-  button.style.cssText = 'font-size: 16px; font-weight: 700; vertical-align: top;';
+  button.setAttribute('aria-label', '開啟雙語字幕面板');
+  button.setAttribute('aria-expanded', 'false');
+  button.setAttribute('aria-pressed', 'false');
+  button.dataset.state = session?.overlay ? 'active' : 'inactive';
+  button.innerHTML = YOUTUBE_BUTTON_ICON;
   button.addEventListener('click', () => togglePanel());
   return button;
+}
+
+function ensureYouTubeButtonStyles(): void {
+  if (document.getElementById(YOUTUBE_BUTTON_STYLE_ID)) return;
+
+  const style = document.createElement('style');
+  style.id = YOUTUBE_BUTTON_STYLE_ID;
+  style.textContent = `
+    #movie_player .bt-yt-button {
+      position: relative;
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: center;
+      width: 48px !important;
+      height: 100% !important;
+      padding: 0 !important;
+      vertical-align: middle;
+      color: #fff;
+      opacity: 0.9;
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+    #movie_player .bt-yt-button:hover,
+    #movie_player .bt-yt-button:focus-visible,
+    #movie_player .bt-yt-button[aria-expanded="true"] {
+      opacity: 1;
+    }
+    #movie_player .bt-yt-button:active {
+      transform: scale(0.92);
+    }
+    #movie_player .bt-yt-button:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: -6px;
+      border-radius: 8px;
+    }
+    #movie_player .bt-yt-button__icon {
+      display: block;
+      width: 28px !important;
+      height: 28px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      pointer-events: none;
+    }
+    #movie_player .bt-yt-button__signal {
+      opacity: 0.68;
+      transition: opacity 160ms ease;
+    }
+    #movie_player .bt-yt-button::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      bottom: 5px;
+      width: 0;
+      height: 2px;
+      border-radius: 2px;
+      background: #f03;
+      transform: translateX(-50%);
+      transition: width 160ms ease;
+    }
+    #movie_player .bt-yt-button[data-state="active"]::after {
+      width: 20px;
+    }
+    #movie_player .bt-yt-button[data-state="active"] .bt-yt-button__signal {
+      opacity: 1;
+    }
+    #movie_player .bt-yt-button[data-state="loading"] .bt-yt-button__icon {
+      animation: bt-yt-button-pulse 900ms ease-in-out infinite alternate;
+    }
+    @keyframes bt-yt-button-pulse {
+      from { opacity: 0.42; }
+      to { opacity: 1; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #movie_player .bt-yt-button,
+      #movie_player .bt-yt-button__signal,
+      #movie_player .bt-yt-button::after {
+        transition: none;
+      }
+      #movie_player .bt-yt-button[data-state="loading"] .bt-yt-button__icon {
+        animation: none;
+        opacity: 0.65;
+      }
+    }
+  `;
+  (document.head ?? document.documentElement).appendChild(style);
+}
+
+function setYouTubeButtonState(state: YouTubeButtonState): void {
+  const button = document.querySelector<HTMLButtonElement>('#movie_player .bt-yt-button');
+  if (!button) return;
+
+  button.dataset.state = state;
+  button.setAttribute('aria-pressed', String(state === 'active'));
+  if (state === 'loading') {
+    button.setAttribute('aria-busy', 'true');
+    button.setAttribute('aria-label', '雙語字幕準備中');
+  } else {
+    button.removeAttribute('aria-busy');
+    button.setAttribute('aria-label', state === 'active' ? '雙語字幕已開啟' : '開啟雙語字幕面板');
+  }
+}
+
+function setPanelExpanded(expanded: boolean): void {
+  const button = document.querySelector<HTMLButtonElement>('#movie_player .bt-yt-button');
+  button?.setAttribute('aria-expanded', String(expanded));
 }
 
 /** 開關控制面板；第一次開啟時建立 DOM 並載入字幕軌清單 */
 function togglePanel(): void {
   if (panel && panel.style.display !== 'none') {
     panel.style.display = 'none';
+    setPanelExpanded(false);
     return;
   }
   if (!panel) {
@@ -128,6 +258,7 @@ function togglePanel(): void {
     document.querySelector('#movie_player')?.appendChild(panel);
   }
   panel.style.display = 'block';
+  setPanelExpanded(true);
   void populateTracks();
 }
 
@@ -269,6 +400,7 @@ async function startSubtitles(): Promise<void> {
   // 記下本次執行的代號；之後每個 await 回來都要確認代號未變才繼續
   const myToken = ++current.runToken;
   setStartButton('準備中…', true);
+  setYouTubeButtonState('loading');
 
   // 1. 下載字幕
   setStatus('下載字幕中…');
@@ -277,6 +409,7 @@ async function startSubtitles(): Promise<void> {
   } catch (err) {
     setStatus(err instanceof Error ? err.message : String(err));
     setStartButton('開啟雙語字幕');
+    setYouTubeButtonState('inactive');
     return;
   }
   if (current.cancelled || current.runToken !== myToken) return;
@@ -284,6 +417,7 @@ async function startSubtitles(): Promise<void> {
   if (current.cues.length === 0) {
     setStatus('這條字幕軌沒有內容。');
     setStartButton('開啟雙語字幕');
+    setYouTubeButtonState('inactive');
     return;
   }
 
@@ -296,6 +430,7 @@ async function startSubtitles(): Promise<void> {
   current.overlay = overlay;
   overlay.setData(current.cues, current.translations);
   setStartButton('關閉雙語字幕', false);
+  setYouTubeButtonState('active');
 
   // 3. 查整部影片的譯文快取；命中就不用再翻
   const cacheKey = await makeCacheKey([
@@ -429,6 +564,7 @@ function stopSubtitles(): void {
   session.overlay?.destroy();
   session.overlay = null;
   setStartButton('開啟雙語字幕');
+  setYouTubeButtonState('inactive');
   setProgress(null);
   setStatus('');
 }
